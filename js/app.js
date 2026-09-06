@@ -11,18 +11,6 @@ const sessionTableBody = document.getElementById('sessionTableBody');
 const testGallery = document.getElementById('testGallery');
 const sessionForm = document.getElementById('sessionForm');
 
-// Hàm bật/tắt ô nhập tùy chỉnh Tinh thần học tập
-function handleThaiDoChange(select) {
-    const customInput = document.getElementById('customThaiDoInput');
-    if (select.value === 'Custom') {
-        customInput.classList.remove('hidden');
-        customInput.focus();
-    } else {
-        customInput.classList.add('hidden');
-    }
-}
-
-// Khởi tạo danh sách dropdown chọn học sinh
 function initStudentSelector() {
     studentSelector.innerHTML = '';
     
@@ -76,56 +64,10 @@ function renderApp() {
     const totalMoney = totalSessions * (student.feePerSession || 0);
     totalFeeDisplay.innerText = totalMoney.toLocaleString('vi-VN') + " đ";
 
-    // Cập nhật các option lọc tháng/năm dựa trên dữ liệu thật của học sinh
-    updateFilterDropdowns(student);
     renderSessionTable();
 }
 
-// Tự động quét các tháng và năm xuất hiện trong chuỗi ngày học để đưa vào bộ lọc
-function updateFilterDropdowns(student) {
-    const monthSelect = document.getElementById('filterMonth');
-    const yearSelect = document.getElementById('filterYear');
-    if (!monthSelect || !yearSelect) return;
-
-    const currentMonthVal = monthSelect.value;
-    const currentYearVal = yearSelect.value;
-
-    const monthsSet = new Set();
-    const yearsSet = new Set();
-
-    if (student.sessions) {
-        student.sessions.forEach(s => {
-            // Quét định dạng dạng DD/MM/YYYY hoặc MM/YYYY hoặc MM-YYYY
-            const matches = s.buoi.match(/(\d{1,2})[\/\-](\d{4})/);
-            if (matches) {
-                monthsSet.add(matches[1].padStart(2, '0'));
-                yearsSet.add(matches[2]);
-            } else {
-                // Thử quét năm riêng lẻ 4 chữ số
-                const yearMatch = s.buoi.match(/\b(20\d{2})\b/);
-                if (yearMatch) yearsSet.add(yearMatch[1]);
-            }
-        });
-    }
-
-    // Đổ lại dữ liệu cho bộ lọc Tháng
-    monthSelect.innerHTML = `<option value="all">Tất cả tháng</option>`;
-    Array.from(monthsSet).sort().forEach(m => {
-        monthSelect.innerHTML += `<option value="${m}">Tháng ${m}</option>`;
-    });
-
-    // Đổ lại dữ liệu cho bộ lọc Năm
-    yearSelect.innerHTML = `<option value="all">Tất cả năm</option>`;
-    Array.from(yearsSet).sort().forEach(y => {
-        yearSelect.innerHTML += `<option value="${y}">${y}</option>`;
-    });
-
-    // Giữ nguyên lựa chọn cũ nếu nó vẫn hợp lệ
-    if ([...monthSelect.options].some(o => o.value === currentMonthVal)) monthSelect.value = currentMonthVal;
-    if ([...yearSelect.options].some(o => o.value === currentYearVal)) yearSelect.value = currentYearVal;
-}
-
-// Render bảng nhật ký học tập (có hỗ trợ lọc theo tháng và năm)
+// Render bảng nhật ký học tập (có hỗ trợ lọc theo tháng và năm thủ công)
 function renderSessionTable() {
     const student = getCurrentStudent();
     const tbody = document.getElementById('sessionTableBody');
@@ -148,11 +90,12 @@ function renderSessionTable() {
         let matchMonth = true;
         let matchYear = true;
 
+        // Dữ liệu ngày lưu theo dạng chuẩn YYYY-MM-DD từ input date hoặc text
         if (selectedMonth !== 'all') {
-            matchMonth = s.buoi.includes(`/${selectedMonth}/`) || s.buoi.includes(`-${selectedMonth}-`) || s.buoi.includes(`/${selectedMonth}`);
+            matchMonth = s.buoi.includes(`-${selectedMonth}-`) || s.buoi.includes(`/${selectedMonth}/`);
         }
         if (selectedYear !== 'all') {
-            matchYear = s.buoi.includes(selectedYear);
+            matchYear = s.buoi.startsWith(selectedYear) || s.buoi.includes(selectedYear);
         }
 
         return (selectedMonth === 'all' || matchMonth) && (selectedYear === 'all' || matchYear);
@@ -172,12 +115,21 @@ function renderSessionTable() {
             btvnBadge = `<span class="bg-rose-50 text-rose-600 px-2 py-0.5 rounded text-xs font-semibold">${item.btvn}%</span>`;
         }
         
+        // Format hiển thị ngày đẹp hơn (YYYY-MM-DD sang DD/MM/YYYY nếu muốn, giữ nguyên cũng được)
+        let displayBuoi = item.buoi;
+        if(item.buoi.includes('-') && item.buoi.split('-').length === 3) {
+            let parts = item.buoi.split('-');
+            displayBuoi = `${parts[2]}/${parts[1]}/${parts[0]} (${item.tenBuoi || ''})`;
+        } else {
+            displayBuoi = `${item.tenBuoi || ''} - ${item.buoi}`;
+        }
+
         let row = `
             <tr class="hover:bg-slate-50/50">
-                <td class="py-3 px-4 font-medium text-slate-900">${item.buoi}</td>
+                <td class="py-3 px-4 font-medium text-slate-900">${displayBuoi}</td>
                 <td class="py-3 px-4 text-slate-600">${item.noiDung}</td>
                 <td class="py-3 px-4">${item.btvn ? btvnBadge : '-'}</td>
-                <td class="py-3 px-4"><span class="font-medium ${item.thaiDo === 'Tốt' ? 'text-emerald-600' : 'text-amber-600'}">${item.thaiDo}</span></td>
+                <td class="py-3 px-4"><span class="font-medium ${item.thaiDo.includes('Tốt') ? 'text-emerald-600' : 'text-amber-600'}">${item.thaiDo}</span></td>
                 <td class="py-3 px-4 text-xs text-slate-500">${item.nhanXet || 'Không có'}</td>
                 <td class="py-3 px-4 text-center flex items-center justify-center gap-3">
                     ${item.image ? `<a href="${item.image}" target="_blank" class="text-sky-600 font-medium text-xs hover:underline">Xem ảnh</a>` : '<span class="text-xs text-slate-400">Không có</span>'}
@@ -192,7 +144,7 @@ function renderSessionTable() {
             let imgCard = `
                 <div class="border border-emerald-200 rounded-2xl overflow-hidden group relative bg-emerald-50/50 shadow-xs">
                     <img src="${item.image}" alt="Bài test đã chấm" class="w-full h-32 object-cover group-hover:scale-105 transition duration-300">
-                    <div class="p-2 text-xs font-medium text-slate-700 truncate bg-white border-t border-emerald-100">${item.buoi}</div>
+                    <div class="p-2 text-xs font-medium text-slate-700 truncate bg-white border-t border-emerald-100">${displayBuoi}</div>
                 </div>
             `;
             testGallery.innerHTML += imgCard;
@@ -251,8 +203,7 @@ function deleteSession(index) {
     const student = getCurrentStudent();
     if (!student || !student.sessions[index]) return;
 
-    const sessionName = student.sessions[index].buoi;
-    if (confirm(`Bạn có chắc chắn muốn xóa ngày học "${sessionName}" không?`)) {
+    if (confirm(`Bạn có chắc chắn muốn xóa buổi học này không?`)) {
         student.sessions.splice(index, 1);
         localStorage.setItem('tutor_app_students', JSON.stringify(studentsData));
         renderApp();
@@ -268,35 +219,31 @@ sessionForm.addEventListener('submit', function(e) {
         return;
     }
 
-    const buoi = document.getElementById('buoiSo').value;
+    const tenBuoi = document.getElementById('buoiSo').value;
+    const ngayHoc = document.getElementById('ngayHoc').value;
     const noiDung = document.getElementById('noiDung').value;
     const btvn = document.getElementById('btvn').value;
-    
-    // Lấy giá trị tinh thần học tập: nếu chọn Custom thì lấy từ ô input tùy chỉnh
-    let thaiDo = document.getElementById('thaiDo').value;
-    if (thaiDo === 'Custom') {
-        thaiDo = document.getElementById('customThaiDoInput').value.trim() || 'Tự do';
-    }
-
+    const thaiDo = document.getElementById('thaiDo').value;
     const nhanXet = document.getElementById('nhanXet').value;
     const imageFile = document.getElementById('testImage').files[0];
 
     if(imageFile) {
         const reader = new FileReader();
         reader.onload = function(uploadEvent) {
-            saveNewSession(student, buoi, noiDung, btvn, thaiDo, nhanXet, uploadEvent.target.result);
+            saveNewSession(student, tenBuoi, ngayHoc, noiDung, btvn, thaiDo, nhanXet, uploadEvent.target.result);
         };
         reader.readAsDataURL(imageFile);
     } else {
-        saveNewSession(student, buoi, noiDung, btvn, thaiDo, nhanXet, null);
+        saveNewSession(student, tenBuoi, ngayHoc, noiDung, btvn, thaiDo, nhanXet, null);
     }
 });
 
-function saveNewSession(student, buoi, noiDung, btvn, thaiDo, nhanXet, imageUrl) {
+function saveNewSession(student, tenBuoi, ngayHoc, noiDung, btvn, thaiDo, nhanXet, imageUrl) {
     if (!student.sessions) student.sessions = [];
     
     student.sessions.push({
-        buoi,
+        tenBuoi,
+        buoi: ngayHoc, // Lưu trữ dạng YYYY-MM-DD từ calendar
         noiDung,
         btvn,
         thaiDo,
@@ -306,10 +253,7 @@ function saveNewSession(student, buoi, noiDung, btvn, thaiDo, nhanXet, imageUrl)
     
     localStorage.setItem('tutor_app_students', JSON.stringify(studentsData));
     
-    // Reset form và ẩn lại ô custom input
     sessionForm.reset();
-    document.getElementById('customThaiDoInput').classList.add('hidden');
-    
     renderApp();
     alert('Đã lưu nhật ký thành công cho ' + student.name + '!');
 }
@@ -325,8 +269,8 @@ function exportToPDF() {
     const selectedYear = document.getElementById('filterYear')?.value || 'all';
 
     const filteredSessions = (student.sessions || []).filter(s => {
-        let matchMonth = selectedMonth === 'all' || s.buoi.includes(`/${selectedMonth}/`) || s.buoi.includes(`-${selectedMonth}-`) || s.buoi.includes(`/${selectedMonth}`);
-        let matchYear = selectedYear === 'all' || s.buoi.includes(selectedYear);
+        let matchMonth = selectedMonth === 'all' || s.buoi.includes(`-${selectedMonth}-`);
+        let matchYear = selectedYear === 'all' || s.buoi.startsWith(selectedYear);
         return matchMonth && matchYear;
     });
 
@@ -339,9 +283,15 @@ function exportToPDF() {
     let sessionsHtml = '';
     if (filteredSessions.length > 0) {
         filteredSessions.forEach((item) => {
+            let displayBuoi = item.buoi;
+            if(item.buoi.includes('-') && item.buoi.split('-').length === 3) {
+                let parts = item.buoi.split('-');
+                displayBuoi = `${parts[2]}/${parts[1]}/${parts[0]} - ${item.tenBuoi || ''}`;
+            }
+
             sessionsHtml += `
                 <tr style="border-bottom: 1px solid #e2e8f0;">
-                    <td style="padding: 10px; font-weight: 500;">${item.buoi}</td>
+                    <td style="padding: 10px; font-weight: 500;">${displayBuoi}</td>
                     <td style="padding: 10px;">${item.noiDung}</td>
                     <td style="padding: 10px; text-align: center;">${item.btvn ? item.btvn + '%' : '-'}</td>
                     <td style="padding: 10px;">${item.thaiDo}</td>
@@ -359,7 +309,6 @@ function exportToPDF() {
         <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #065f46; padding-bottom: 15px;">
             <h1 style="color: #065f46; font-size: 24px; margin: 0 0 5px 0;">BÁO CÁO HỌC TẬP</h1>
             <p style="font-size: 14px; color: #475569; margin: 0;">Lớp: <strong>${student.name}</strong></p>
-            <p style="font-size: 12px; color: #0284c7; margin-top: 5px;">Thời gian lọc: ${selectedMonth === 'all' ? 'Tất cả các tháng' : 'Tháng ' + selectedMonth} ${selectedYear === 'all' ? '' : 'Năm ' + selectedYear}</p>
         </div>
         
         <div style="margin-bottom: 20px; font-size: 14px; background: #f0fdf4; padding: 15px; border-radius: 8px; border: 1px solid #bbf7d0;">
@@ -373,7 +322,7 @@ function exportToPDF() {
         <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px;">
             <thead>
                 <tr style="background-color: #065f46; color: white;">
-                    <th style="padding: 10px; text-align: left;">Buổi / Ngày</th>
+                    <th style="padding: 10px; text-align: left;">Ngày / Buổi</th>
                     <th style="padding: 10px; text-align: left;">Nội dung</th>
                     <th style="padding: 10px; text-align: center;">BTVN</th>
                     <th style="padding: 10px; text-align: left;">Tinh thần</th>
@@ -393,7 +342,7 @@ function exportToPDF() {
 
     const opt = {
         margin:       10,
-        filename:     `Bao-Cao-${student.name.replace(/\s+/g, '_')}_${selectedMonth}_${selectedYear}.pdf`,
+        filename:     `Bao-Cao-${student.name.replace(/\s+/g, '_')}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
