@@ -67,7 +67,6 @@ function renderApp() {
     renderSessionTable();
 }
 
-// Render bảng nhật ký học tập với bộ lọc chuẩn xác
 function renderSessionTable() {
     const student = getCurrentStudent();
     const tbody = document.getElementById('sessionTableBody');
@@ -89,7 +88,7 @@ function renderSessionTable() {
     const filteredSessions = student.sessions.filter(s => {
         let matchMonth = true;
         let matchYear = true;
-        let parts = s.buoi ? s.buoi.split('-') : []; // Định dạng YYYY-MM-DD từ calendar
+        let parts = s.buoi ? s.buoi.split('-') : [];
 
         if (selectedMonth !== 'all') {
             matchMonth = parts.length === 3 ? (parts[1] === selectedMonth) : s.buoi.includes(`-${selectedMonth}-`);
@@ -115,7 +114,6 @@ function renderSessionTable() {
             btvnBadge = `<span class="bg-rose-50 text-rose-600 px-2 py-0.5 rounded text-xs font-semibold">${item.btvn}%</span>`;
         }
         
-        // Hiển thị ngày tháng chuẩn DD/MM/YYYY kèm tên buổi
         let displayBuoi = '';
         if (item.buoi && item.buoi.split('-').length === 3) {
             let parts = item.buoi.split('-');
@@ -243,7 +241,7 @@ function saveNewSession(student, tenBuoi, ngayHoc, noiDung, btvn, thaiDo, nhanXe
     
     student.sessions.push({
         tenBuoi,
-        buoi: ngayHoc, // Lưu trữ dạng YYYY-MM-DD
+        buoi: ngayHoc,
         noiDung,
         btvn,
         thaiDo,
@@ -258,12 +256,7 @@ function saveNewSession(student, tenBuoi, ngayHoc, noiDung, btvn, thaiDo, nhanXe
     alert('Đã lưu nhật ký thành công cho ' + student.name + '!');
 }
 
-async function exportToPDF() {
-    if (typeof html2pdf === 'undefined') {
-        alert("Thư viện xuất PDF chưa được tải! Vui lòng kiểm tra lại kết nối Internet.");
-        return;
-    }
-
+function exportToPDF() {
     const student = getCurrentStudent();
     if (!student) {
         alert("Không có dữ liệu lớp học để xuất PDF!");
@@ -288,12 +281,6 @@ async function exportToPDF() {
         return matchMonth && matchYear;
     });
 
-    const element = document.createElement('div');
-    element.style.padding = '20px';
-    element.style.fontFamily = 'Roboto, sans-serif';
-    element.style.color = '#1e293b';
-    element.style.backgroundColor = '#ffffff';
-
     let sessionsHtml = '';
     if (filteredSessions.length > 0) {
         filteredSessions.forEach((item) => {
@@ -306,12 +293,12 @@ async function exportToPDF() {
             }
 
             sessionsHtml += `
-                <tr style="border-bottom: 1px solid #e2e8f0;">
-                    <td style="padding: 10px; font-weight: 500;">${displayBuoi}</td>
-                    <td style="padding: 10px;">${item.noiDung}</td>
-                    <td style="padding: 10px; text-align: center;">${item.btvn !== '' ? item.btvn + '%' : '-'}</td>
-                    <td style="padding: 10px;">${item.thaiDo || '-'}</td>
-                    <td style="padding: 10px; font-size: 12px; color: #475569;">${item.nhanXet || 'Không có'}</td>
+                <tr>
+                    <td style="font-weight: 500;">${displayBuoi}</td>
+                    <td>${item.noiDung}</td>
+                    <td style="text-align: center;">${item.btvn !== '' ? item.btvn + '%' : '-'}</td>
+                    <td>${item.thaiDo || '-'}</td>
+                    <td style="font-size: 12px; color: #475569;">${item.nhanXet || 'Không có'}</td>
                 </tr>
             `;
         });
@@ -332,56 +319,64 @@ async function exportToPDF() {
         titleTimeStr = `TẤT CẢ CÁC THÁNG`;
     }
 
-    element.innerHTML = `
-        <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #065f46; padding-bottom: 15px;">
-            <h1 style="color: #065f46; font-size: 22px; margin: 0 0 5px 0;">BÁO CÁO HỌC TẬP ${titleTimeStr}</h1>
-            <p style="font-size: 14px; color: #475569; margin: 0;">Lớp: <strong>${student.name}</strong></p>
-        </div>
-        
-        <div style="margin-bottom: 20px; font-size: 14px; background: #f0fdf4; padding: 15px; border-radius: 8px; border: 1px solid #bbf7d0;">
-            <p style="margin: 5px 0;"><strong>👤 Người dạy học:</strong> ${student.teacher || 'Chưa có'}</p>
-            <p style="margin: 5px 0;"><strong>💰 Học phí/buổi:</strong> ${(student.feePerSession || 0).toLocaleString('vi-VN')} đ</p>
-            <p style="margin: 5px 0;"><strong>📚 Tổng số buổi hiển thị:</strong> ${filteredSessions.length} buổi</p>
-            <p style="margin: 5px 0; font-size: 16px; color: #0369a1;"><strong>💵 Tổng học phí lọc:</strong> ${totalMoney.toLocaleString('vi-VN')} đ</p>
-        </div>
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>Bao-Cao-${student.name}</title>
+            <style>
+                body { font-family: 'Roboto', sans-serif; color: #1e293b; padding: 20px; }
+                h1 { color: #065f46; font-size: 20px; text-align: center; margin-bottom: 5px; }
+                .header-box { background: #f0fdf4; padding: 12px; border-radius: 8px; border: 1px solid #bbf7d0; margin-bottom: 20px; font-size: 13px; }
+                table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+                th { background-color: #065f46; color: white; padding: 8px; text-align: left; }
+                td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
+                .footer { margin-top: 30px; text-align: right; font-size: 12px; color: #64748b; }
+                @media print {
+                    button { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <div style="text-align: center; border-bottom: 2px solid #065f46; padding-bottom: 10px; margin-bottom: 15px;">
+                <h1>BÁO CÁO HỌC TẬP ${titleTimeStr}</h1>
+                <p style="font-size: 13px; color: #475569; margin: 0;">Lớp: <strong>${student.name}</strong></p>
+            </div>
+            
+            <div class="header-box">
+                <p style="margin: 4px 0;"><strong>👤 Người dạy học:</strong> ${student.teacher || 'Chưa có'}</p>
+                <p style="margin: 4px 0;"><strong>💰 Học phí/buổi:</strong> ${(student.feePerSession || 0).toLocaleString('vi-VN')} đ</p>
+                <p style="margin: 4px 0;"><strong>📚 Tổng số buổi:</strong> ${filteredSessions.length} buổi</p>
+                <p style="margin: 4px 0; font-size: 15px; color: #0369a1;"><strong>💵 Tổng học phí:</strong> ${totalMoney.toLocaleString('vi-VN')} đ</p>
+            </div>
 
-        <h3 style="color: #065f46; font-size: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;">Nhật ký hành trình học tập</h3>
-        <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px;">
-            <thead>
-                <tr style="background-color: #065f46; color: white;">
-                    <th style="padding: 10px; text-align: left;">Buổi / Ngày</th>
-                    <th style="padding: 10px; text-align: left;">Nội dung</th>
-                    <th style="padding: 10px; text-align: center;">BTVN</th>
-                    <th style="padding: 10px; text-align: left;">Tinh thần</th>
-                    <th style="padding: 10px; text-align: left;">Nhận xét</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${sessionsHtml}
-            </tbody>
-        </table>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Buổi / Ngày</th>
+                        <th>Nội dung</th>
+                        <th style="text-align: center;">BTVN</th>
+                        <th>Tinh thần</th>
+                        <th>Nhận xét</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sessionsHtml}
+                </tbody>
+            </table>
 
-        <div style="margin-top: 40px; text-align: right; font-size: 12px; color: #64748b;">
-            <p>Ngày xuất báo cáo: ${new Date().toLocaleDateString('vi-VN')}</p>
-            <p style="margin-top: 30px; font-weight: bold; color: #065f46;">(Ký và ghi rõ họ tên)</p>
-        </div>
-    `;
+            <div class="footer">
+                <p>Ngày xuất báo cáo: ${new Date().toLocaleDateString('vi-VN')}</p>
+                <p style="margin-top: 25px; font-weight: bold; color: #065f46;">(Ký và ghi rõ họ tên)</p>
+            </div>
 
-    const opt = {
-        margin:       10,
-        filename:     `Bao-Cao-${student.name.replace(/\s+/g, '_')}-${selectedMonth}_${selectedYear}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    // Dùng setTimeout để nhường lại luồng render cho trình duyệt, tránh đứng giao diện
-    setTimeout(async () => {
-        try {
-            await html2pdf().from(element).set(opt).save();
-        } catch (err) {
-            console.error("Lỗi xuất PDF:", err);
-            alert("Đã xảy ra lỗi khi tạo file PDF.");
-        }
-    }, 100);
+            <script>
+                window.onload = function() {
+                    window.print();
+                }
+            </script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
 }
