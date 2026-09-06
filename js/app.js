@@ -319,22 +319,20 @@ function exportToPDF() {
         titleTimeStr = `TẤT CẢ CÁC THÁNG`;
     }
 
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
+    const htmlContent = `
+        <!DOCTYPE html>
         <html>
         <head>
+            <meta charset="UTF-8">
             <title>Bao-Cao-${student.name}</title>
             <style>
-                body { font-family: 'Roboto', sans-serif; color: #1e293b; padding: 20px; }
+                body { font-family: 'Roboto', sans-serif; color: #1e293b; padding: 20px; margin: 0; }
                 h1 { color: #065f46; font-size: 20px; text-align: center; margin-bottom: 5px; }
                 .header-box { background: #f0fdf4; padding: 12px; border-radius: 8px; border: 1px solid #bbf7d0; margin-bottom: 20px; font-size: 13px; }
                 table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
                 th { background-color: #065f46; color: white; padding: 8px; text-align: left; }
                 td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
                 .footer { margin-top: 30px; text-align: right; font-size: 12px; color: #64748b; }
-                @media print {
-                    button { display: none; }
-                }
             </style>
         </head>
         <body>
@@ -344,10 +342,10 @@ function exportToPDF() {
             </div>
             
             <div class="header-box">
-                <p style="margin: 4px 0;"><strong>👤 Người dạy học:</strong> ${student.teacher || 'Chưa có'}</p>
-                <p style="margin: 4px 0;"><strong>💰 Học phí/buổi:</strong> ${(student.feePerSession || 0).toLocaleString('vi-VN')} đ</p>
-                <p style="margin: 4px 0;"><strong>📚 Tổng số buổi:</strong> ${filteredSessions.length} buổi</p>
-                <p style="margin: 4px 0; font-size: 15px; color: #0369a1;"><strong>💵 Tổng học phí:</strong> ${totalMoney.toLocaleString('vi-VN')} đ</p>
+                <p style="margin: 4px 0;"><strong> Người dạy học:</strong> ${student.teacher || 'Chưa có'}</p>
+                <p style="margin: 4px 0;"><strong> Học phí/buổi:</strong> ${(student.feePerSession || 0).toLocaleString('vi-VN')} đ</p>
+                <p style="margin: 4px 0;"><strong> Tổng số buổi:</strong> ${filteredSessions.length} buổi</p>
+                <p style="margin: 4px 0; font-size: 15px; color: #0369a1;"><strong> Tổng học phí:</strong> ${totalMoney.toLocaleString('vi-VN')} đ</p>
             </div>
 
             <table>
@@ -369,14 +367,20 @@ function exportToPDF() {
                 <p>Ngày xuất báo cáo: ${new Date().toLocaleDateString('vi-VN')}</p>
                 <p style="margin-top: 25px; font-weight: bold; color: #065f46;">(Ký và ghi rõ họ tên)</p>
             </div>
-
-            <script>
-                window.onload = function() {
-                    window.print();
-                }
-            </script>
         </body>
         </html>
-    `);
-    printWindow.document.close();
+    `;
+
+    // Sử dụng Blob URL giúp trình duyệt xử lý trang in như một tệp độc lập hoàn toàn, không gây nghẽn luồng chính
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    
+    const printWindow = window.open(url, '_blank');
+    if (printWindow) {
+        printWindow.onload = function() {
+            printWindow.print();
+        };
+    } else {
+        alert("Trình duyệt đang chặn cửa sổ bật lên (Pop-up blocker). Vui lòng cho phép popup cho trang web này!");
+    }
 }
