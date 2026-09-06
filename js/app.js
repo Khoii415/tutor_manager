@@ -384,3 +384,11 @@ function exportToPDF() {
         alert("Trình duyệt đang chặn cửa sổ bật lên (Pop-up blocker). Vui lòng cho phép popup cho trang web này!");
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    renderApp();
+    
+    // Đảm bảo khi thay đổi bộ lọc tháng/năm thì bảng cũng tự cập nhật lại
+    document.getElementById('filterMonth')?.addEventListener('change', renderSessionTable);
+    document.getElementById('filterYear')?.addEventListener('change', renderSessionTable);
+});
