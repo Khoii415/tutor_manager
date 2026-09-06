@@ -385,10 +385,5 @@ function exportToPDF() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    renderApp();
-    
-    // Đảm bảo khi thay đổi bộ lọc tháng/năm thì bảng cũng tự cập nhật lại
-    document.getElementById('filterMonth')?.addEventListener('change', renderSessionTable);
-    document.getElementById('filterYear')?.addEventListener('change', renderSessionTable);
-});
+
+renderApp();
