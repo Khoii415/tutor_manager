@@ -258,9 +258,9 @@ function saveNewSession(student, tenBuoi, ngayHoc, noiDung, btvn, thaiDo, nhanXe
     alert('Đã lưu nhật ký thành công cho ' + student.name + '!');
 }
 
-function exportToPDF() {
+async function exportToPDF() {
     if (typeof html2pdf === 'undefined') {
-        alert("Thư viện xuất PDF chưa được tải! Vui lòng kiểm tra lại kết nối Internet để tải thư viện từ CDN.");
+        alert("Thư viện xuất PDF chưa được tải! Vui lòng kiểm tra lại kết nối Internet.");
         return;
     }
 
@@ -375,8 +375,13 @@ function exportToPDF() {
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    html2pdf().from(element).set(opt).save().catch(err => {
-        console.error("Lỗi xuất PDF:", err);
-        alert("Đã xảy ra lỗi khi tạo file PDF. Vui lòng kiểm tra Console (F12).");
-    });
+    // Dùng setTimeout để nhường lại luồng render cho trình duyệt, tránh đứng giao diện
+    setTimeout(async () => {
+        try {
+            await html2pdf().from(element).set(opt).save();
+        } catch (err) {
+            console.error("Lỗi xuất PDF:", err);
+            alert("Đã xảy ra lỗi khi tạo file PDF.");
+        }
+    }, 100);
 }
