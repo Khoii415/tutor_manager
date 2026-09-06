@@ -1,8 +1,6 @@
-// Lấy dữ liệu từ LocalStorage, nếu chưa có thì để mảng trống [] hoàn toàn
 let studentsData = JSON.parse(localStorage.getItem('tutor_app_students')) || [];
 let currentStudentId = studentsData.length > 0 ? studentsData[0].id : null;
 
-// DOM Elements
 const studentSelector = document.getElementById('studentSelector');
 const studentNameDisplay = document.getElementById('studentNameDisplay');
 const teacherDisplay = document.getElementById('teacherDisplay');
@@ -12,6 +10,17 @@ const totalFeeDisplay = document.getElementById('totalFeeDisplay');
 const sessionTableBody = document.getElementById('sessionTableBody');
 const testGallery = document.getElementById('testGallery');
 const sessionForm = document.getElementById('sessionForm');
+
+// Hàm bật/tắt ô nhập tùy chỉnh Tinh thần học tập
+function handleThaiDoChange(select) {
+    const customInput = document.getElementById('customThaiDoInput');
+    if (select.value === 'Custom') {
+        customInput.classList.remove('hidden');
+        customInput.focus();
+    } else {
+        customInput.classList.add('hidden');
+    }
+}
 
 // Khởi tạo danh sách dropdown chọn học sinh
 function initStudentSelector() {
@@ -26,7 +35,6 @@ function initStudentSelector() {
         return;
     }
 
-    // Đảm bảo currentStudentId hợp lệ
     if (!studentsData.some(s => s.id === currentStudentId)) {
         currentStudentId = studentsData[0].id;
     }
@@ -40,17 +48,14 @@ function initStudentSelector() {
     });
 }
 
-// Lấy thông tin học sinh đang được chọn
 function getCurrentStudent() {
     return studentsData.find(s => s.id === currentStudentId);
 }
 
-// Render toàn bộ giao diện theo học sinh hiện tại
 function renderApp() {
     initStudentSelector();
     const student = getCurrentStudent();
     
-    // Nếu chưa có học sinh nào trong hệ thống
     if (!student) {
         studentNameDisplay.innerText = "Chưa chọn lớp học";
         teacherDisplay.innerText = "-";
@@ -62,7 +67,6 @@ function renderApp() {
         return;
     }
     
-    // Cập nhật thông tin thẻ tổng quan
     studentNameDisplay.innerText = student.name;
     teacherDisplay.innerText = student.teacher || "Chưa có";
     feeDisplay.innerText = (student.feePerSession || 0).toLocaleString('vi-VN') + " đ / buổi";
@@ -72,15 +76,58 @@ function renderApp() {
     const totalMoney = totalSessions * (student.feePerSession || 0);
     totalFeeDisplay.innerText = totalMoney.toLocaleString('vi-VN') + " đ";
 
-    // Render bảng nhật ký học tập và kho ảnh
+    // Cập nhật các option lọc tháng/năm dựa trên dữ liệu thật của học sinh
+    updateFilterDropdowns(student);
     renderSessionTable();
+}
+
+// Tự động quét các tháng và năm xuất hiện trong chuỗi ngày học để đưa vào bộ lọc
+function updateFilterDropdowns(student) {
+    const monthSelect = document.getElementById('filterMonth');
+    const yearSelect = document.getElementById('filterYear');
+    if (!monthSelect || !yearSelect) return;
+
+    const currentMonthVal = monthSelect.value;
+    const currentYearVal = yearSelect.value;
+
+    const monthsSet = new Set();
+    const yearsSet = new Set();
+
+    if (student.sessions) {
+        student.sessions.forEach(s => {
+            // Quét định dạng dạng DD/MM/YYYY hoặc MM/YYYY hoặc MM-YYYY
+            const matches = s.buoi.match(/(\d{1,2})[\/\-](\d{4})/);
+            if (matches) {
+                monthsSet.add(matches[1].padStart(2, '0'));
+                yearsSet.add(matches[2]);
+            } else {
+                // Thử quét năm riêng lẻ 4 chữ số
+                const yearMatch = s.buoi.match(/\b(20\d{2})\b/);
+                if (yearMatch) yearsSet.add(yearMatch[1]);
+            }
+        });
+    }
+
+    // Đổ lại dữ liệu cho bộ lọc Tháng
+    monthSelect.innerHTML = `<option value="all">Tất cả tháng</option>`;
+    Array.from(monthsSet).sort().forEach(m => {
+        monthSelect.innerHTML += `<option value="${m}">Tháng ${m}</option>`;
+    });
+
+    // Đổ lại dữ liệu cho bộ lọc Năm
+    yearSelect.innerHTML = `<option value="all">Tất cả năm</option>`;
+    Array.from(yearsSet).sort().forEach(y => {
+        yearSelect.innerHTML += `<option value="${y}">${y}</option>`;
+    });
+
+    // Giữ nguyên lựa chọn cũ nếu nó vẫn hợp lệ
+    if ([...monthSelect.options].some(o => o.value === currentMonthVal)) monthSelect.value = currentMonthVal;
+    if ([...yearSelect.options].some(o => o.value === currentYearVal)) yearSelect.value = currentYearVal;
 }
 
 // Render bảng nhật ký học tập (có hỗ trợ lọc theo tháng và năm)
 function renderSessionTable() {
     const student = getCurrentStudent();
-    if (!tbodyCheck()) return; // Tránh lỗi khi gọi nhanh
-
     const tbody = document.getElementById('sessionTableBody');
     if (!tbody) return;
 
@@ -94,11 +141,9 @@ function renderSessionTable() {
         return;
     }
 
-    // Lấy giá trị lọc tháng và năm từ giao diện
     const selectedMonth = document.getElementById('filterMonth')?.value || 'all';
     const selectedYear = document.getElementById('filterYear')?.value || 'all';
 
-    // Lọc danh sách buổi học
     const filteredSessions = student.sessions.filter(s => {
         let matchMonth = true;
         let matchYear = true;
@@ -120,7 +165,6 @@ function renderSessionTable() {
     }
 
     filteredSessions.forEach((item) => {
-        // Tìm index thật trong mảng gốc của student.sessions để xóa chính xác
         const originalIndex = student.sessions.indexOf(item);
 
         let btvnBadge = `<span class="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded text-xs font-semibold">${item.btvn}%</span>`;
@@ -160,18 +204,11 @@ function renderSessionTable() {
     }
 }
 
-// Kiểm tra phụ trợ chống lỗi DOM chưa load kịp
-function tbodyCheck() {
-    return document.getElementById('sessionTableBody') !== null;
-}
-
-// Khi đổi học sinh trên Dropdown
 studentSelector.addEventListener('change', function(e) {
     currentStudentId = e.target.value;
     renderApp();
 });
 
-// Hàm tạo lớp học mới
 function addNewClass() {
     const className = prompt("Nhập tên lớp học / học sinh mới (Ví dụ: Lan Anh - Tiếng Anh):");
     if (!className) return;
@@ -194,7 +231,6 @@ function addNewClass() {
     renderApp();
 }
 
-// Hàm xóa lớp học đang được chọn
 function deleteCurrentClass() {
     const student = getCurrentStudent();
     if (!student) {
@@ -211,7 +247,6 @@ function deleteCurrentClass() {
     }
 }
 
-// Hàm xóa một buổi học cụ thể theo chỉ mục (index)
 function deleteSession(index) {
     const student = getCurrentStudent();
     if (!student || !student.sessions[index]) return;
@@ -224,7 +259,6 @@ function deleteSession(index) {
     }
 }
 
-// Xử lý submit form thêm buổi học mới
 sessionForm.addEventListener('submit', function(e) {
     e.preventDefault();
     
@@ -237,7 +271,13 @@ sessionForm.addEventListener('submit', function(e) {
     const buoi = document.getElementById('buoiSo').value;
     const noiDung = document.getElementById('noiDung').value;
     const btvn = document.getElementById('btvn').value;
-    const thaiDo = document.getElementById('thaiDo').value;
+    
+    // Lấy giá trị tinh thần học tập: nếu chọn Custom thì lấy từ ô input tùy chỉnh
+    let thaiDo = document.getElementById('thaiDo').value;
+    if (thaiDo === 'Custom') {
+        thaiDo = document.getElementById('customThaiDoInput').value.trim() || 'Tự do';
+    }
+
     const nhanXet = document.getElementById('nhanXet').value;
     const imageFile = document.getElementById('testImage').files[0];
 
@@ -265,12 +305,15 @@ function saveNewSession(student, buoi, noiDung, btvn, thaiDo, nhanXet, imageUrl)
     });
     
     localStorage.setItem('tutor_app_students', JSON.stringify(studentsData));
-    renderApp();
+    
+    // Reset form và ẩn lại ô custom input
     sessionForm.reset();
+    document.getElementById('customThaiDoInput').classList.add('hidden');
+    
+    renderApp();
     alert('Đã lưu nhật ký thành công cho ' + student.name + '!');
 }
 
-// Hàm xuất báo cáo lớp học ra file PDF (tự động lọc theo tháng/năm đang chọn)
 function exportToPDF() {
     const student = getCurrentStudent();
     if (!student) {
@@ -281,14 +324,12 @@ function exportToPDF() {
     const selectedMonth = document.getElementById('filterMonth')?.value || 'all';
     const selectedYear = document.getElementById('filterYear')?.value || 'all';
 
-    // Lọc các buổi học theo đúng bộ lọc trên giao diện
     const filteredSessions = (student.sessions || []).filter(s => {
         let matchMonth = selectedMonth === 'all' || s.buoi.includes(`/${selectedMonth}/`) || s.buoi.includes(`-${selectedMonth}-`) || s.buoi.includes(`/${selectedMonth}`);
         let matchYear = selectedYear === 'all' || s.buoi.includes(selectedYear);
         return matchMonth && matchYear;
     });
 
-    // Tạo một vùng chứa tạm thời để gom nội dung xuất PDF
     const element = document.createElement('div');
     element.style.padding = '20px';
     element.style.fontFamily = 'Roboto, sans-serif';
@@ -361,7 +402,6 @@ function exportToPDF() {
     html2pdf().from(element).set(opt).save();
 }
 
-// Hàm chỉnh sửa thông tin chung của lớp học hiện tại
 function openEditClassModal() {
     const student = getCurrentStudent();
     if (!student) {
@@ -387,5 +427,4 @@ function openEditClassModal() {
     alert("Đã cập nhật thông tin lớp học thành công!");
 }
 
-// Chạy khởi tạo ứng dụng khi load trang lần đầu
 renderApp();

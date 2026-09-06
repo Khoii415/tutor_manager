@@ -28,9 +28,10 @@
                 <div class="flex items-center gap-3 w-full sm:w-auto bg-emerald-800 px-3 py-2 rounded-2xl border-2 border-emerald-900 shadow-inner">
                     <span class="handwritten text-lg font-bold text-sky-200">Danh sách lớp:</span>
                     <select id="studentSelector" class="bg-white text-emerald-950 text-sm font-semibold px-3 py-1.5 rounded-xl border border-emerald-900 focus:outline-none w-full sm:w-52 cursor-pointer shadow-xs">
-                        </select>
+                    </select>
                 </div>
-            <div class="flex items-center gap-2 flex-wrap">
+            </div>
+            <div class="flex items-center gap-2 flex-wrap pb-2 sm:pb-0 px-6 max-w-7xl mx-auto">
                 <button onclick="addNewClass()" class="bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold px-3 py-2 rounded-xl border border-emerald-900 transition shadow-xs cursor-pointer">
                     ➕ Thêm lớp mới
                 </button>
@@ -94,13 +95,15 @@
                             </div>
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Tinh thần học tập</label>
-                                <select id="thaiDo" class="w-full px-3.5 py-2.5 bg-emerald-50/50 border-2 border-emerald-200 rounded-xl focus:outline-none focus:border-sky-500 font-medium cursor-pointer">
+                                <select id="thaiDo" onchange="handleThaiDoChange(this)" class="w-full px-3.5 py-2.5 bg-emerald-50/50 border-2 border-emerald-200 rounded-xl focus:outline-none focus:border-sky-500 font-medium cursor-pointer">
                                     <option value="Tốt">Tích cực, tập trung tốt</option>
                                     <option value="Nói chuyện riêng">Tiếp thu ổn</option>
                                     <option value="Lười học">Chưa thực sự tập trung</option>
                                     <option value="Mất tập trung">Cần cố gắng nhiều hơn</option>
-                                    <option value="Custom"> Tự điền ...</option>
+                                    <option value="Custom">✏️ Tự điền...</option>
                                 </select>
+                                <!-- Ô nhập tùy chỉnh ẩn mặc định -->
+                                <input type="text" id="customThaiDoInput" placeholder="Nhập trạng thái tùy chỉnh..." class="hidden mt-2 w-full px-3.5 py-2 bg-emerald-50/50 border-2 border-emerald-300 rounded-xl focus:outline-none focus:border-sky-500 font-medium text-xs">
                             </div>
                         </div>
                         <div>
@@ -124,30 +127,15 @@
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                         <h3 class="handwritten text-2xl font-bold text-emerald-900">Lịch học</h3>
                         
-                        <!-- Bộ lọc Tháng & Năm -->
+                        <!-- Bộ lọc Tháng & Năm tự động động -->
                         <div class="flex items-center gap-2 text-xs font-semibold">
                             <span class="text-slate-600">Lọc:</span>
                             <select id="filterMonth" onchange="renderSessionTable()" class="bg-emerald-50 border border-emerald-300 text-emerald-900 px-2.5 py-1.5 rounded-xl focus:outline-none cursor-pointer">
                                 <option value="all">Tất cả tháng</option>
-                                <option value="01">Tháng 1</option>
-                                <option value="02">Tháng 2</option>
-                                <option value="03">Tháng 3</option>
-                                <option value="04">Tháng 4</option>
-                                <option value="05">Tháng 5</option>
-                                <option value="06">Tháng 6</option>
-                                <option value="07">Tháng 7</option>
-                                <option value="08">Tháng 8</option>
-                                <option value="09">Tháng 9</option>
-                                <option value="10">Tháng 10</option>
-                                <option value="11">Tháng 11</option>
-                                <option value="12">Tháng 12</option>
                             </select>
 
                             <select id="filterYear" onchange="renderSessionTable()" class="bg-emerald-50 border border-emerald-300 text-emerald-900 px-2.5 py-1.5 rounded-xl focus:outline-none cursor-pointer">
                                 <option value="all">Tất cả năm</option>
-                                <option value="2025">2025</option>
-                                <option value="2026">2026</option>
-                                <option value="2027">2027</option>
                             </select>
                         </div>
                     </div>
@@ -165,7 +153,7 @@
                                 </tr>
                             </thead>
                             <tbody id="sessionTableBody" class="divide-y divide-emerald-50 font-medium text-slate-700">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -173,10 +161,10 @@
                 <div class="bg-white border-3 border-emerald-800 p-6 rounded-3xl shadow-sm">
                     <h3 class="handwritten text-2xl font-bold text-emerald-900 mb-4 flex items-center gap-2">
                         <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        🐼 Kho ảnh bài test
+                        Kho ảnh bài test
                     </h3>
                     <div id="testGallery" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        </div>
+                    </div>
                 </div>
 
             </div>
