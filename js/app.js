@@ -263,15 +263,15 @@ function exportToPDF() {
 
     element.innerHTML = `
         <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #065f46; padding-bottom: 15px;">
-            <h1 style="color: #065f46; font-size: 24px; margin: 0 0 5px 0;">BÁO CÁO HỌC TẬP - SAFARI TUTOR HUB</h1>
+            <h1 style="color: #065f46; font-size: 24px; margin: 0 0 5px 0;">BÁO CÁO HỌC TẬP</h1>
             <p style="font-size: 14px; color: #475569; margin: 0;">Lớp: <strong>${student.name}</strong></p>
         </div>
         
         <div style="margin-bottom: 20px; font-size: 14px; background: #f0fdf4; padding: 15px; border-radius: 8px; border: 1px solid #bbf7d0;">
-            <p style="margin: 5px 0;"><strong>🐧 Người dạy học:</strong> ${student.teacher || 'Chưa có'}</p>
-            <p style="margin: 5px 0;"><strong>🐼 Học phí/buổi:</strong> ${(student.feePerSession || 0).toLocaleString('vi-VN')} đ</p>
-            <p style="margin: 5px 0;"><strong>🐨 Tổng số buổi:</strong> ${student.sessions ? student.sessions.length : 0} buổi</p>
-            <p style="margin: 5px 0; font-size: 16px; color: #0369a1;"><strong>💰 Tổng học phí:</strong> ${totalMoney.toLocaleString('vi-VN')} đ</p>
+            <p style="margin: 5px 0;"><strong> Người dạy học:</strong> ${student.teacher || 'Chưa có'}</p>
+            <p style="margin: 5px 0;"><strong> Học phí/buổi:</strong> ${(student.feePerSession || 0).toLocaleString('vi-VN')} đ</p>
+            <p style="margin: 5px 0;"><strong> Tổng số buổi:</strong> ${student.sessions ? student.sessions.length : 0} buổi</p>
+            <p style="margin: 5px 0; font-size: 16px; color: #0369a1;"><strong> Tổng học phí:</strong> ${totalMoney.toLocaleString('vi-VN')} đ</p>
         </div>
 
         <h3 style="color: #065f46; font-size: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;">Nhật ký hành trình học tập</h3>
@@ -307,4 +307,32 @@ function exportToPDF() {
 
     // Tiến hành tạo và tải file PDF về máy
     html2pdf().from(element).set(opt).save();
+}
+
+// Hàm chỉnh sửa thông tin chung của lớp học hiện tại
+function openEditClassModal() {
+    const student = getCurrentStudent();
+    if (!student) {
+        alert("Không có lớp học nào để chỉnh sửa!");
+        return;
+    }
+
+    const newName = prompt("Nhập tên lớp học / học sinh mới:", student.name);
+    if (newName === null) return; // Người dùng bấm Hủy
+
+    const newTeacher = prompt("Nhập tên giáo viên hướng dẫn mới:", student.teacher || "");
+    if (newTeacher === null) return;
+
+    const newFee = prompt("Nhập học phí cơ bản 1 buổi mới (VNĐ):", student.feePerSession || 0);
+    if (newFee === null) return;
+
+    // Cập nhật lại dữ liệu
+    student.name = newName.trim() || student.name;
+    student.teacher = newTeacher.trim() || "ANONYMOUS";
+    student.feePerSession = parseInt(newFee) || 0;
+
+    // Lưu vào LocalStorage và render lại giao diện
+    localStorage.setItem('tutor_app_students', JSON.stringify(studentsData));
+    renderApp();
+    alert("Đã cập nhật thông tin lớp học thành công!");
 }
