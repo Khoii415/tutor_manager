@@ -259,6 +259,11 @@ function saveNewSession(student, tenBuoi, ngayHoc, noiDung, btvn, thaiDo, nhanXe
 }
 
 function exportToPDF() {
+    if (typeof html2pdf === 'undefined') {
+        alert("Thư viện xuất PDF chưa được tải! Vui lòng kiểm tra lại kết nối Internet để tải thư viện từ CDN.");
+        return;
+    }
+
     const student = getCurrentStudent();
     if (!student) {
         alert("Không có dữ liệu lớp học để xuất PDF!");
@@ -316,7 +321,6 @@ function exportToPDF() {
 
     const totalMoney = filteredSessions.length * (student.feePerSession || 0);
 
-    // Xác định tiêu đề Tháng / Năm theo đúng yêu cầu: "BÁO CÁO HỌC TẬP THÁNG XX / XXXX"
     let titleTimeStr = "";
     if (selectedMonth !== 'all' && selectedYear !== 'all') {
         titleTimeStr = `THÁNG ${selectedMonth} / ${selectedYear}`;
@@ -335,10 +339,10 @@ function exportToPDF() {
         </div>
         
         <div style="margin-bottom: 20px; font-size: 14px; background: #f0fdf4; padding: 15px; border-radius: 8px; border: 1px solid #bbf7d0;">
-            <p style="margin: 5px 0;"><strong> Người dạy học:</strong> ${student.teacher || 'Chưa có'}</p>
-            <p style="margin: 5px 0;"><strong> Học phí/buổi:</strong> ${(student.feePerSession || 0).toLocaleString('vi-VN')} đ</p>
-            <p style="margin: 5px 0;"><strong> Tổng số buổi hiển thị:</strong> ${filteredSessions.length} buổi</p>
-            <p style="margin: 5px 0; font-size: 16px; color: #0369a1;"><strong> Tổng học phí lọc:</strong> ${totalMoney.toLocaleString('vi-VN')} đ</p>
+            <p style="margin: 5px 0;"><strong>👤 Người dạy học:</strong> ${student.teacher || 'Chưa có'}</p>
+            <p style="margin: 5px 0;"><strong>💰 Học phí/buổi:</strong> ${(student.feePerSession || 0).toLocaleString('vi-VN')} đ</p>
+            <p style="margin: 5px 0;"><strong>📚 Tổng số buổi hiển thị:</strong> ${filteredSessions.length} buổi</p>
+            <p style="margin: 5px 0; font-size: 16px; color: #0369a1;"><strong>💵 Tổng học phí lọc:</strong> ${totalMoney.toLocaleString('vi-VN')} đ</p>
         </div>
 
         <h3 style="color: #065f46; font-size: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;">Nhật ký hành trình học tập</h3>
@@ -371,32 +375,8 @@ function exportToPDF() {
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    html2pdf().from(element).set(opt).save();
+    html2pdf().from(element).set(opt).save().catch(err => {
+        console.error("Lỗi xuất PDF:", err);
+        alert("Đã xảy ra lỗi khi tạo file PDF. Vui lòng kiểm tra Console (F12).");
+    });
 }
-
-function openEditClassModal() {
-    const student = getCurrentStudent();
-    if (!student) {
-        alert("Không có lớp học nào để chỉnh sửa!");
-        return;
-    }
-
-    const newName = prompt("Nhập tên lớp học / học sinh mới:", student.name);
-    if (newName === null) return;
-
-    const newTeacher = prompt("Nhập tên giáo viên hướng dẫn mới:", student.teacher || "");
-    if (newTeacher === null) return;
-
-    const newFee = prompt("Nhập học phí cơ bản 1 buổi mới (VNĐ):", student.feePerSession || 0);
-    if (newFee === null) return;
-
-    student.name = newName.trim() || student.name;
-    student.teacher = newTeacher.trim() || "ANONYMOUS";
-    student.feePerSession = parseInt(newFee) || 0;
-
-    localStorage.setItem('tutor_app_students', JSON.stringify(studentsData));
-    renderApp();
-    alert("Đã cập nhật thông tin lớp học thành công!");
-}
-
-renderApp();
