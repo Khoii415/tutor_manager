@@ -3,197 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Như cái sở thú</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Quản Lý Lớp Học & Nhật Ký Buổi Học</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- html2pdf library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Roboto', sans-serif; }
-        .handwritten { font-family: 'Patrick Hand', cursive; }
     </style>
 </head>
-<body class="bg-emerald-50/50 text-slate-800 antialiased selection:bg-emerald-400 selection:text-white">
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-12">
 
-    <div class="min-h-screen flex flex-col justify-between">
+    <!-- Header / Navbar -->
+    <header class="bg-emerald-700 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">📚</span>
+                <h1 class="text-xl font-bold tracking-wide">TutorApp - Quản Lý Dạy Học</h1>
+            </div>
+            
+            <!-- Student/Class Selector & Actions -->
+            <div class="flex items-center gap-2 flex-wrap justify-center">
+                <select id="studentSelector" class="bg-emerald-800 text-white text-sm px-3 py-2 rounded-lg border border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                    <!-- Dynamic options -->
+                </select>
+                <button onclick="addNewClass()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow-xs cursor-pointer flex items-center gap-1">
+                    <span>➕</span> Thêm lớp
+                </button>
+                <button onclick="openEditClassModal()" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow-xs cursor-pointer flex items-center gap-1" title="Sửa thông tin lớp">
+                    <span>✏️</span> Sửa lớp
+                </button>
+                <button onclick="deleteCurrentClass()" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow-xs cursor-pointer flex items-center gap-1" title="Xóa lớp hiện tại">
+                    <span>🗑️</span> Xóa lớp
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <header class="bg-emerald-700 text-white border-b-4 border-emerald-900 sticky top-0 z-50 shadow-md">
-            <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div class="flex items-center space-x-3">
-                    <div class="w-11 h-11 bg-sky-400 text-emerald-950 rounded-2xl border-2 border-emerald-900 flex items-center justify-center font-bold text-2xl handwritten shadow"></div>
-                    <div>
-                        <h1 class="handwritten text-3xl font-bold tracking-wide text-sky-200">Như cái sở thú<span class="text-xs not-italic font-sans bg-sky-500 text-white px-2 py-0.5 rounded-full ml-1 border border-emerald-900"></span></h1>
-                    </div>
+        <!-- Left Column: Form & Info -->
+        <div class="lg:col-span-1 space-y-6">
+            
+            <!-- Class Summary Card -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                <h2 id="studentNameDisplay" class="text-lg font-bold text-slate-900 mb-3 border-b pb-2">-</h2>
+                <div class="space-y-2 text-sm">
+                    <p class="flex justify-between"><span class="text-slate-500">Giáo viên:</span> <span id="teacherDisplay" class="font-semibold text-slate-700">-</span></p>
+                    <p class="flex justify-between"><span class="text-slate-500">Học phí/buổi:</span> <span id="feeDisplay" class="font-semibold text-emerald-600">-</span></p>
+                    <p class="flex justify-between"><span class="text-slate-500">Tổng số buổi:</span> <span id="totalSessions" class="font-semibold text-slate-700">0 buổi</span></p>
+                    <p class="flex justify-between pt-2 border-t border-slate-100"><span class="text-slate-500 font-medium">Tổng học phí:</span> <span id="totalFeeDisplay" class="font-bold text-sky-600 text-base">0 đ</span></p>
                 </div>
+            </div>
 
-                <div class="flex items-center gap-3 w-full sm:w-auto bg-emerald-800 px-3 py-2 rounded-2xl border-2 border-emerald-900 shadow-inner">
-                    <span class="handwritten text-lg font-bold text-sky-200">Danh sách lớp:</span>
-                    <select id="studentSelector" class="bg-white text-emerald-950 text-sm font-semibold px-3 py-1.5 rounded-xl border border-emerald-900 focus:outline-none w-full sm:w-52 cursor-pointer shadow-xs">
+            <!-- Add Session Form -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <span>✍️</span> Thêm Nhật Ký Buổi Học
+                </h3>
+                <form id="sessionForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Tên/Số buổi học</label>
+                        <input type="text" id="buoiSo" required placeholder="Ví dụ: Buổi 1, Ôn tập chương 1..." class="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Ngày học (Lịch)</label>
+                        <input type="date" id="ngayHoc" required class="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Nội dung bài học</label>
+                        <textarea id="noiDung" rows="2" required placeholder="Hôm nay học gì..." class="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">BTVN (%)</label>
+                            <input type="number" id="btvn" min="0" max="100" placeholder="VD: 80" class="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Thái độ học tập</label>
+                            <select id="thaiDo" class="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <option value="Tốt 🌟">Tốt 🌟</option>
+                                <option value="Khá 👍">Khá 👍</option>
+                                <option value="Bình thường 😐">Bình thường 😐</option>
+                                <option value="Cần cố gắng ⚠️">Cần cố gắng ⚠️</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Nhận xét chi tiết</label>
+                        <input type="text" id="nhanXet" placeholder="Nhận xét ngắn gọn..." class="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Ảnh bài test / bài tập (nếu có)</label>
+                        <input type="file" id="testImage" accept="image/*" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
+                    </div>
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg text-sm transition shadow-sm cursor-pointer">
+                        Lưu Buổi Học
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Filters & Tables & Gallery -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Filters & Actions Toolbar -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                    <span class="text-sm font-medium text-slate-600">Lọc theo:</span>
+                    <select id="filterMonth" onchange="renderSessionTable()" class="text-sm border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="all">Tất cả tháng</option>
+                        <option value="01">Tháng 1</option>
+                        <option value="02">Tháng 2</option>
+                        <option value="03">Tháng 3</option>
+                        <option value="04">Tháng 4</option>
+                        <option value="05">Tháng 5</option>
+                        <option value="06">Tháng 6</option>
+                        <option value="07">Tháng 7</option>
+                        <option value="08">Tháng 8</option>
+                        <option value="09">Tháng 9</option>
+                        <option value="10">Tháng 10</option>
+                        <option value="11">Tháng 11</option>
+                        <option value="12">Tháng 12</option>
+                    </select>
+                    <select id="filterYear" onchange="renderSessionTable()" class="text-sm border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="all">Tất cả năm</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                        <option value="2027">2027</option>
                     </select>
                 </div>
-            </div>
-            <div class="flex items-center gap-2 flex-wrap pb-2 sm:pb-0 px-6 max-w-7xl mx-auto">
-                <button onclick="addNewClass()" class="bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold px-3 py-2 rounded-xl border border-emerald-900 transition shadow-xs cursor-pointer">
-                    ➕ Thêm lớp mới
-                </button>
-                <button onclick="exportToPDF()" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-2 rounded-xl border border-emerald-900 transition shadow-xs cursor-pointer" title="Xuất báo cáo lớp học ra file PDF">
-                    📄 Xuất PDF
-                </button>
-                <button onclick="deleteCurrentClass()" class="bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold px-3 py-2 rounded-xl border border-emerald-900 transition shadow-xs cursor-pointer" title="Xóa lớp học hiện tại">
-                    🗑️ Xóa lớp này
-                </button>
-            </div>
-        </header>
-
-        <main class="max-w-7xl mx-auto px-6 py-8 flex-grow w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <div class="space-y-6">
-                
-                <div class="bg-white border-3 border-emerald-800 p-6 rounded-3xl shadow-sm relative overflow-hidden">
-                    <div class="absolute -right-6 -bottom-6 text-7xl opacity-10 select-none">🦒</div>
-                    <div class="flex justify-between items-start mb-4 pb-3 border-b border-emerald-100">
-                        <div>
-                            <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider bg-emerald-100 px-2.5 py-1 rounded-lg">Thông tin chung</span>
-                            <h2 id="studentNameDisplay" class="handwritten text-3xl font-bold text-emerald-900 mt-1">Đang tải...</h2>
-                        </div>
-                        <button onclick="openEditClassModal()" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-bold px-2.5 py-1.5 rounded-xl border border-amber-300 transition shadow-xs cursor-pointer flex items-center gap-1" title="Chỉnh sửa thông tin lớp">
-                            ✏️ Sửa
-                        </button>
-                    </div>
-                    
-                    <div class="space-y-3 text-sm border-b border-emerald-100 pb-4 mb-4 font-medium text-slate-700">
-                        <div class="flex justify-between"><span class="text-slate-500">Người dạy học:</span> <span id="teacherDisplay" class="font-bold text-emerald-900">-</span></div>
-                        <div class="flex justify-between"><span class="text-slate-500">Học phí/buổi:</span> <span id="feeDisplay" class="font-bold text-emerald-900">-</span></div>
-                        <div class="flex justify-between"><span class="text-slate-500">Tổng số buổi:</span> <span id="totalSessions" class="font-bold text-sky-600">0 buổi</span></div>
-                    </div>
-
-                    <div class="bg-sky-50 p-4 rounded-2xl border-2 border-sky-200 relative overflow-hidden">
-                        <div class="absolute right-2 bottom-1 text-3xl opacity-20 select-none">🐬</div>
-                        <span class="handwritten text-base font-bold text-sky-800 block uppercase tracking-wider mb-0.5">💰 Tổng giá vé: </span>
-                        <div id="totalFeeDisplay" class="handwritten text-3xl font-bold text-sky-900">0 đ</div>
-                    </div>
-                </div>
-
-                <div class="bg-white border-3 border-emerald-800 p-6 rounded-3xl shadow-sm relative overflow-hidden">
-                    <div class="absolute -right-4 -bottom-4 text-6xl opacity-10 select-none">🌴</div>
-                    <h3 class="handwritten text-2xl font-bold text-emerald-900 mb-4 flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full bg-sky-500"></span>
-                        Nhật ký
-                    </h3>
-                    <form id="sessionForm" class="space-y-3.5 text-sm">
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block font-semibold text-slate-700 mb-1">🔢 Tên / Số buổi</label>
-                                <input type="text" id="buoiSo" placeholder="Ví dụ: Buổi 1" required class="w-full px-3.5 py-2.5 bg-emerald-50/50 border-2 border-emerald-200 rounded-xl focus:outline-none focus:border-sky-500 font-medium">
-                            </div>
-                            <div>
-                                <label class="block font-semibold text-slate-700 mb-1">📅 Chọn ngày học</label>
-                                <input type="date" id="ngayHoc" required class="w-full px-3.5 py-2.5 bg-emerald-50/50 border-2 border-emerald-200 rounded-xl focus:outline-none focus:border-sky-500 font-medium text-xs cursor-pointer">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block font-semibold text-slate-700 mb-1">🗺️ Nội dung học</label>
-                            <input type="text" id="noiDung" placeholder="Ví dụ: Vượt qua rừng hàm số..." required class="w-full px-3.5 py-2.5 bg-emerald-50/50 border-2 border-emerald-200 rounded-xl focus:outline-none focus:border-sky-500 font-medium">
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block font-semibold text-slate-700 mb-1">📝 BTVN (%)</label>
-                                <input type="number" id="btvn" placeholder="100" min="0" max="100" class="w-full px-3.5 py-2.5 bg-emerald-50/50 border-2 border-emerald-200 rounded-xl focus:outline-none focus:border-sky-500 font-medium">
-                            </div>
-                            <div>
-                                <label class="block font-semibold text-slate-700 mb-1">Tinh thần học tập</label>
-                                <select id="thaiDo" class="w-full px-3.5 py-2.5 bg-emerald-50/50 border-2 border-emerald-200 rounded-xl focus:outline-none focus:border-sky-500 font-medium cursor-pointer">
-                                    <option value="Tích cực, tập trung tốt">Tích cực, tập trung tốt</option>
-                                    <option value="Tiếp thu ổn">Tiếp thu ổn</option>
-                                    <option value="Chưa thực sự tập trung">Chưa thực sự tập trung</option>
-                                    <option value="Cần cố gắng nhiều hơn">Cần cố gắng nhiều hơn</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block font-semibold text-slate-700 mb-1">💬 Nhận xét</label>
-                            <textarea id="nhanXet" rows="2" placeholder="Ghi chú đánh giá học sinh..." class="w-full px-3.5 py-2.5 bg-emerald-50/50 border-2 border-emerald-200 rounded-xl focus:outline-none focus:border-sky-500 font-medium"></textarea>
-                        </div>
-                        <div>
-                            <label class="block font-semibold text-slate-700 mb-1">📸 Tải ảnh bài test</label>
-                            <input type="file" id="testImage" accept="image/*" class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-sky-100 file:text-sky-800 hover:file:bg-sky-200 cursor-pointer">
-                        </div>
-                        <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white handwritten text-xl font-bold py-3 rounded-xl transition duration-200 shadow-md cursor-pointer tracking-wide border border-emerald-900">
-                            Lưu
-                        </button>
-                    </form>
+                <div>
+                    <button onclick="exportToPDF()" class="bg-sky-600 hover:bg-sky-700 text-white font-medium text-sm px-4 py-2 rounded-lg transition shadow-xs cursor-pointer flex items-center gap-2">
+                        <span>📥</span> Xuất Báo Cáo PDF
+                    </button>
                 </div>
             </div>
 
-            <div class="lg:col-span-2 space-y-6">
-                
-                <div class="bg-white border-3 border-emerald-800 p-6 rounded-3xl shadow-sm overflow-hidden">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-                        <h3 class="handwritten text-2xl font-bold text-emerald-900">Lịch học</h3>
-                        
-                        <!-- Bộ lọc Cố định Tháng & Năm thủ công -->
-                        <div class="flex items-center gap-2 text-xs font-semibold">
-                            <span class="text-slate-600">Lọc:</span>
-                            <select id="filterMonth" onchange="renderSessionTable()" class="bg-emerald-50 border border-emerald-300 text-emerald-900 px-2.5 py-1.5 rounded-xl focus:outline-none cursor-pointer">
-                                <option value="all">Tất cả tháng</option>
-                                <option value="01">Tháng 1</option>
-                                <option value="02">Tháng 2</option>
-                                <option value="03">Tháng 3</option>
-                                <option value="04">Tháng 4</option>
-                                <option value="05">Tháng 5</option>
-                                <option value="06">Tháng 6</option>
-                                <option value="07">Tháng 7</option>
-                                <option value="08">Tháng 8</option>
-                                <option value="09">Tháng 9</option>
-                                <option value="10">Tháng 10</option>
-                                <option value="11">Tháng 11</option>
-                                <option value="12">Tháng 12</option>
-                            </select>
-
-                            <select id="filterYear" onchange="renderSessionTable()" class="bg-emerald-50 border border-emerald-300 text-emerald-900 px-2.5 py-1.5 rounded-xl focus:outline-none cursor-pointer">
-                                <option value="all">Tất cả năm</option>
-                                <option value="2025">2025</option>
-                                <option value="2026">2026</option>
-                                <option value="2027">2027</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-sm">
-                            <thead>
-                                <tr class="bg-emerald-100/70 text-emerald-900 border-b-2 border-emerald-200 text-xs uppercase tracking-wider font-bold">
-                                    <th class="py-3 px-4">Buổi / Ngày</th>
-                                    <th class="py-3 px-4">Nội dung</th>
-                                    <th class="py-3 px-4">BTVN</th>
-                                    <th class="py-3 px-4">Tinh thần</th>
-                                    <th class="py-3 px-4">Nhận xét</th>
-                                    <th class="py-3 px-4 text-center">Bài Test</th>
-                                </tr>
-                            </thead>
-                            <tbody id="sessionTableBody" class="divide-y divide-emerald-50 font-medium text-slate-700">
-                            </tbody>
-                        </table>
-                    </div>
+            <!-- Sessions Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800 text-sm">Danh Sách Nhật Ký Buổi Học</h3>
                 </div>
-
-                <div class="bg-white border-3 border-emerald-800 p-6 rounded-3xl shadow-sm">
-                    <h3 class="handwritten text-2xl font-bold text-emerald-900 mb-4 flex items-center gap-2">
-                        <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        Kho ảnh bài test
-                    </h3>
-                    <div id="testGallery" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                                <th class="py-3 px-4">Buổi / Ngày</th>
+                                <th class="py-3 px-4">Nội Dung</th>
+                                <th class="py-3 px-4">BTVN</th>
+                                <th class="py-3 px-4">Thái Độ</th>
+                                <th class="py-3 px-4">Nhận Xét</th>
+                                <th class="py-3 px-4 text-center">Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sessionTableBody" class="divide-y divide-slate-100">
+                            <!-- Dynamic rows -->
+                        </tbody>
+                    </table>
                 </div>
-
             </div>
 
-        </main>
-        
-        <footer class="text-center py-6 text-xs text-emerald-900 border-t-2 border-emerald-200 bg-emerald-100/50 font-medium">
-            Như cái sở thú &bull; NVAK - ĐTB &bull; Private project.
-        </footer>
-    </div>
+            <!-- Test Gallery Section -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                <h3 class="font-bold text-slate-800 text-sm mb-3">Thư Viện Bài Test / Hình Ảnh Đã Tải Lên</h3>
+                <div id="testGallery" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <p class="text-xs text-slate-400 col-span-full">Chưa có bài test nào.</p>
+                </div>
+            </div>
 
-    <script src="./js/app.js"></script>
+        </div>
+
+    </main>
+
+    <!-- Main JavaScript File -->
+    <script src="js/app.js"></script>
 </body>
 </html>

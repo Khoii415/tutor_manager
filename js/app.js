@@ -67,7 +67,7 @@ function renderApp() {
     renderSessionTable();
 }
 
-// Render bảng nhật ký học tập (có hỗ trợ lọc theo tháng và năm thủ công)
+// Render bảng nhật ký học tập với bộ lọc chuẩn xác
 function renderSessionTable() {
     const student = getCurrentStudent();
     const tbody = document.getElementById('sessionTableBody');
@@ -89,16 +89,16 @@ function renderSessionTable() {
     const filteredSessions = student.sessions.filter(s => {
         let matchMonth = true;
         let matchYear = true;
+        let parts = s.buoi ? s.buoi.split('-') : []; // Định dạng YYYY-MM-DD từ calendar
 
-        // Dữ liệu ngày lưu theo dạng chuẩn YYYY-MM-DD từ input date hoặc text
         if (selectedMonth !== 'all') {
-            matchMonth = s.buoi.includes(`-${selectedMonth}-`) || s.buoi.includes(`/${selectedMonth}/`);
+            matchMonth = parts.length === 3 ? (parts[1] === selectedMonth) : s.buoi.includes(`-${selectedMonth}-`);
         }
         if (selectedYear !== 'all') {
-            matchYear = s.buoi.startsWith(selectedYear) || s.buoi.includes(selectedYear);
+            matchYear = parts.length === 3 ? (parts[0] === selectedYear) : s.buoi.startsWith(selectedYear);
         }
 
-        return (selectedMonth === 'all' || matchMonth) && (selectedYear === 'all' || matchYear);
+        return matchMonth && matchYear;
     });
 
     if (filteredSessions.length === 0) {
@@ -115,21 +115,21 @@ function renderSessionTable() {
             btvnBadge = `<span class="bg-rose-50 text-rose-600 px-2 py-0.5 rounded text-xs font-semibold">${item.btvn}%</span>`;
         }
         
-        // Format hiển thị ngày đẹp hơn (YYYY-MM-DD sang DD/MM/YYYY nếu muốn, giữ nguyên cũng được)
-        let displayBuoi = item.buoi;
-        if(item.buoi.includes('-') && item.buoi.split('-').length === 3) {
+        // Hiển thị ngày tháng chuẩn DD/MM/YYYY kèm tên buổi
+        let displayBuoi = '';
+        if (item.buoi && item.buoi.split('-').length === 3) {
             let parts = item.buoi.split('-');
-            displayBuoi = `${parts[2]}/${parts[1]}/${parts[0]} (${item.tenBuoi || ''})`;
+            displayBuoi = `${item.tenBuoi || 'Buổi'} (${parts[2]}/${parts[1]}/${parts[0]})`;
         } else {
-            displayBuoi = `${item.tenBuoi || ''} - ${item.buoi}`;
+            displayBuoi = `${item.tenBuoi || ''} - ${item.buoi || ''}`;
         }
 
         let row = `
             <tr class="hover:bg-slate-50/50">
                 <td class="py-3 px-4 font-medium text-slate-900">${displayBuoi}</td>
                 <td class="py-3 px-4 text-slate-600">${item.noiDung}</td>
-                <td class="py-3 px-4">${item.btvn ? btvnBadge : '-'}</td>
-                <td class="py-3 px-4"><span class="font-medium ${item.thaiDo.includes('Tốt') ? 'text-emerald-600' : 'text-amber-600'}">${item.thaiDo}</span></td>
+                <td class="py-3 px-4">${item.btvn !== '' ? btvnBadge : '-'}</td>
+                <td class="py-3 px-4"><span class="font-medium ${item.thaiDo && item.thaiDo.includes('Tốt') ? 'text-emerald-600' : 'text-amber-600'}">${item.thaiDo || '-'}</span></td>
                 <td class="py-3 px-4 text-xs text-slate-500">${item.nhanXet || 'Không có'}</td>
                 <td class="py-3 px-4 text-center flex items-center justify-center gap-3">
                     ${item.image ? `<a href="${item.image}" target="_blank" class="text-sky-600 font-medium text-xs hover:underline">Xem ảnh</a>` : '<span class="text-xs text-slate-400">Không có</span>'}
@@ -243,7 +243,7 @@ function saveNewSession(student, tenBuoi, ngayHoc, noiDung, btvn, thaiDo, nhanXe
     
     student.sessions.push({
         tenBuoi,
-        buoi: ngayHoc, // Lưu trữ dạng YYYY-MM-DD từ calendar
+        buoi: ngayHoc, // Lưu trữ dạng YYYY-MM-DD
         noiDung,
         btvn,
         thaiDo,
@@ -269,8 +269,17 @@ function exportToPDF() {
     const selectedYear = document.getElementById('filterYear')?.value || 'all';
 
     const filteredSessions = (student.sessions || []).filter(s => {
-        let matchMonth = selectedMonth === 'all' || s.buoi.includes(`-${selectedMonth}-`);
-        let matchYear = selectedYear === 'all' || s.buoi.startsWith(selectedYear);
+        let matchMonth = true;
+        let matchYear = true;
+        let parts = s.buoi ? s.buoi.split('-') : [];
+
+        if (selectedMonth !== 'all') {
+            matchMonth = parts.length === 3 ? (parts[1] === selectedMonth) : s.buoi.includes(`-${selectedMonth}-`);
+        }
+        if (selectedYear !== 'all') {
+            matchYear = parts.length === 3 ? (parts[0] === selectedYear) : s.buoi.startsWith(selectedYear);
+        }
+
         return matchMonth && matchYear;
     });
 
@@ -283,18 +292,20 @@ function exportToPDF() {
     let sessionsHtml = '';
     if (filteredSessions.length > 0) {
         filteredSessions.forEach((item) => {
-            let displayBuoi = item.buoi;
-            if(item.buoi.includes('-') && item.buoi.split('-').length === 3) {
+            let displayBuoi = '';
+            if (item.buoi && item.buoi.split('-').length === 3) {
                 let parts = item.buoi.split('-');
-                displayBuoi = `${parts[2]}/${parts[1]}/${parts[0]} - ${item.tenBuoi || ''}`;
+                displayBuoi = `${item.tenBuoi || 'Buổi'} (${parts[2]}/${parts[1]}/${parts[0]})`;
+            } else {
+                displayBuoi = `${item.tenBuoi || ''} - ${item.buoi || ''}`;
             }
 
             sessionsHtml += `
                 <tr style="border-bottom: 1px solid #e2e8f0;">
                     <td style="padding: 10px; font-weight: 500;">${displayBuoi}</td>
                     <td style="padding: 10px;">${item.noiDung}</td>
-                    <td style="padding: 10px; text-align: center;">${item.btvn ? item.btvn + '%' : '-'}</td>
-                    <td style="padding: 10px;">${item.thaiDo}</td>
+                    <td style="padding: 10px; text-align: center;">${item.btvn !== '' ? item.btvn + '%' : '-'}</td>
+                    <td style="padding: 10px;">${item.thaiDo || '-'}</td>
                     <td style="padding: 10px; font-size: 12px; color: #475569;">${item.nhanXet || 'Không có'}</td>
                 </tr>
             `;
@@ -305,9 +316,21 @@ function exportToPDF() {
 
     const totalMoney = filteredSessions.length * (student.feePerSession || 0);
 
+    // Xác định tiêu đề Tháng / Năm theo đúng yêu cầu: "BÁO CÁO HỌC TẬP THÁNG XX / XXXX"
+    let titleTimeStr = "";
+    if (selectedMonth !== 'all' && selectedYear !== 'all') {
+        titleTimeStr = `THÁNG ${selectedMonth} / ${selectedYear}`;
+    } else if (selectedMonth !== 'all' && selectedYear === 'all') {
+        titleTimeStr = `THÁNG ${selectedMonth}`;
+    } else if (selectedMonth === 'all' && selectedYear !== 'all') {
+        titleTimeStr = `NĂM ${selectedYear}`;
+    } else {
+        titleTimeStr = `TẤT CẢ CÁC THÁNG`;
+    }
+
     element.innerHTML = `
         <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #065f46; padding-bottom: 15px;">
-            <h1 style="color: #065f46; font-size: 24px; margin: 0 0 5px 0;">BÁO CÁO HỌC TẬP</h1>
+            <h1 style="color: #065f46; font-size: 22px; margin: 0 0 5px 0;">BÁO CÁO HỌC TẬP ${titleTimeStr}</h1>
             <p style="font-size: 14px; color: #475569; margin: 0;">Lớp: <strong>${student.name}</strong></p>
         </div>
         
@@ -322,7 +345,7 @@ function exportToPDF() {
         <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px;">
             <thead>
                 <tr style="background-color: #065f46; color: white;">
-                    <th style="padding: 10px; text-align: left;">Ngày / Buổi</th>
+                    <th style="padding: 10px; text-align: left;">Buổi / Ngày</th>
                     <th style="padding: 10px; text-align: left;">Nội dung</th>
                     <th style="padding: 10px; text-align: center;">BTVN</th>
                     <th style="padding: 10px; text-align: left;">Tinh thần</th>
@@ -342,7 +365,7 @@ function exportToPDF() {
 
     const opt = {
         margin:       10,
-        filename:     `Bao-Cao-${student.name.replace(/\s+/g, '_')}.pdf`,
+        filename:     `Bao-Cao-${student.name.replace(/\s+/g, '_')}-${selectedMonth}_${selectedYear}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
