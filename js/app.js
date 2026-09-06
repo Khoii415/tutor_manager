@@ -226,3 +226,85 @@ function saveNewSession(student, buoi, noiDung, btvn, thaiDo, nhanXet, imageUrl)
 
 // Chạy khởi tạo ứng dụng khi load trang lần đầu
 renderApp();
+// Hàm xuất báo cáo lớp học ra file PDF
+function exportToPDF() {
+    const student = getCurrentStudent();
+    if (!student) {
+        alert("Không có dữ liệu lớp học để xuất PDF!");
+        return;
+    }
+
+    // Tạo một vùng chứa tạm thời để gom nội dung cần xuất PDF cho đẹp mắt và gọn gàng
+    const element = document.createElement('div');
+    element.style.padding = '20px';
+    element.style.fontFamily = 'Roboto, sans-serif';
+    element.style.color = '#1e293b';
+    element.style.backgroundColor = '#ffffff';
+
+    // Nội dung bên trong bản PDF
+    let sessionsHtml = '';
+    if (student.sessions && student.sessions.length > 0) {
+        student.sessions.forEach((item, index) => {
+            sessionsHtml += `
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 10px; font-weight: 500;">${item.buoi}</td>
+                    <td style="padding: 10px;">${item.noiDung}</td>
+                    <td style="padding: 10px; text-align: center;">${item.btvn ? item.btvn + '%' : '-'}</td>
+                    <td style="padding: 10px;">${item.thaiDo}</td>
+                    <td style="padding: 10px; font-size: 12px; color: #475569;">${item.nhanXet || 'Không có'}</td>
+                </tr>
+            `;
+        });
+    } else {
+        sessionsHtml = `<tr><td colspan="5" style="text-align: center; padding: 15px; color: #94a3b8;">Chưa có nhật ký buổi học.</td></tr>`;
+    }
+
+    const totalMoney = (student.sessions ? student.sessions.length : 0) * (student.feePerSession || 0);
+
+    element.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #065f46; padding-bottom: 15px;">
+            <h1 style="color: #065f46; font-size: 24px; margin: 0 0 5px 0;">BÁO CÁO HỌC TẬP - SAFARI TUTOR HUB</h1>
+            <p style="font-size: 14px; color: #475569; margin: 0;">Lớp: <strong>${student.name}</strong></p>
+        </div>
+        
+        <div style="margin-bottom: 20px; font-size: 14px; background: #f0fdf4; padding: 15px; border-radius: 8px; border: 1px solid #bbf7d0;">
+            <p style="margin: 5px 0;"><strong>🐧 Người dạy học:</strong> ${student.teacher || 'Chưa có'}</p>
+            <p style="margin: 5px 0;"><strong>🐼 Học phí/buổi:</strong> ${(student.feePerSession || 0).toLocaleString('vi-VN')} đ</p>
+            <p style="margin: 5px 0;"><strong>🐨 Tổng số buổi:</strong> ${student.sessions ? student.sessions.length : 0} buổi</p>
+            <p style="margin: 5px 0; font-size: 16px; color: #0369a1;"><strong>💰 Tổng học phí:</strong> ${totalMoney.toLocaleString('vi-VN')} đ</p>
+        </div>
+
+        <h3 style="color: #065f46; font-size: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;">Nhật ký hành trình học tập</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px;">
+            <thead>
+                <tr style="background-color: #065f46; color: white;">
+                    <th style="padding: 10px; text-align: left;">Buổi / Ngày</th>
+                    <th style="padding: 10px; text-align: left;">Nội dung</th>
+                    <th style="padding: 10px; text-align: center;">BTVN</th>
+                    <th style="padding: 10px; text-align: left;">Tinh thần</th>
+                    <th style="padding: 10px; text-align: left;">Nhận xét</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${sessionsHtml}
+            </tbody>
+        </table>
+
+        <div style="margin-top: 40px; text-align: right; font-size: 12px; color: #64748b;">
+            <p>Ngày xuất báo cáo: ${new Date().toLocaleDateString('vi-VN')}</p>
+            <p style="margin-top: 30px; font-weight: bold; color: #065f46;">(Ký và ghi rõ họ tên)</p>
+        </div>
+    `;
+
+    // Cấu hình options cho thư viện html2pdf
+    const opt = {
+        margin:       10,
+        filename:     `Bao-Cao-${student.name.replace(/\s+/g, '_')}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // Tiến hành tạo và tải file PDF về máy
+    html2pdf().from(element).set(opt).save();
+}

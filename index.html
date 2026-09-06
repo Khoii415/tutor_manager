@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Như cái sở thú</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Roboto', sans-serif; }
@@ -18,14 +19,14 @@
         <header class="bg-emerald-700 text-white border-b-4 border-emerald-900 sticky top-0 z-50 shadow-md">
             <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div class="flex items-center space-x-3">
-                    <div class="w-11 h-11 bg-sky-400 text-emerald-950 rounded-2xl border-2 border-emerald-900 flex items-center justify-center font-bold text-2xl handwritten shadow">🦁</div>
+                    <div class="w-11 h-11 bg-sky-400 text-emerald-950 rounded-2xl border-2 border-emerald-900 flex items-center justify-center font-bold text-2xl handwritten shadow"></div>
                     <div>
-                        <h1 class="handwritten text-3xl font-bold tracking-wide text-sky-200">Như cái sở thú<span class="text-xs not-italic font-sans bg-sky-500 text-white px-2 py-0.5 rounded-full ml-1 border border-emerald-900">🐯</span></h1>
+                        <h1 class="handwritten text-3xl font-bold tracking-wide text-sky-200">Như cái sở thú<span class="text-xs not-italic font-sans bg-sky-500 text-white px-2 py-0.5 rounded-full ml-1 border border-emerald-900"></span></h1>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-3 w-full sm:w-auto bg-emerald-800 px-3 py-2 rounded-2xl border-2 border-emerald-900 shadow-inner">
-                    <span class="handwritten text-lg font-bold text-sky-200">🐘 Danh sách thú:</span>
+                    <span class="handwritten text-lg font-bold text-sky-200">Danh sách lớp:</span>
                     <select id="studentSelector" class="bg-white text-emerald-950 text-sm font-semibold px-3 py-1.5 rounded-xl border border-emerald-900 focus:outline-none w-full sm:w-52 cursor-pointer shadow-xs">
                         </select>
                 </div>
@@ -39,6 +40,17 @@
                     </button>
                 </div>
             </div>
+            <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="addNewClass()" class="bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold px-3 py-2 rounded-xl border border-emerald-900 transition shadow-xs cursor-pointer">
+                    ➕ Thêm lớp mới
+                </button>
+                <button onclick="exportToPDF()" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-2 rounded-xl border border-emerald-900 transition shadow-xs cursor-pointer" title="Xuất báo cáo lớp học ra file PDF">
+                    📄 Xuất PDF
+                </button>
+                <button onclick="deleteCurrentClass()" class="bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold px-3 py-2 rounded-xl border border-emerald-900 transition shadow-xs cursor-pointer" title="Xóa lớp học hiện tại">
+                    🗑️ Xóa lớp này
+                </button>
+            </div>
         </header>
 
         <main class="max-w-7xl mx-auto px-6 py-8 flex-grow w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -49,16 +61,16 @@
                     <div class="absolute -right-6 -bottom-6 text-7xl opacity-10 select-none">🦒</div>
                     <div class="flex justify-between items-start mb-4 pb-3 border-b border-emerald-100">
                         <div>
-                            <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider bg-emerald-100 px-2.5 py-1 rounded-lg">🌿 Chuồng học</span>
+                            <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider bg-emerald-100 px-2.5 py-1 rounded-lg">Thông tin chung</span>
                             <h2 id="studentNameDisplay" class="handwritten text-3xl font-bold text-emerald-900 mt-1">Đang tải...</h2>
                         </div>
-                        <span class="bg-sky-500 text-white text-xs font-semibold px-3 py-1 rounded-full border border-sky-600 shadow-xs">🦓 Đang tồn kho</span>
+                        <span class="bg-sky-500 text-white text-xs font-semibold px-3 py-1 rounded-full border border-sky-600 shadow-xs">Loading...</span>
                     </div>
                     
                     <div class="space-y-3 text-sm border-b border-emerald-100 pb-4 mb-4 font-medium text-slate-700">
-                        <div class="flex justify-between"><span class="text-slate-500">🐧 Quản trò:</span> <span id="teacherDisplay" class="font-bold text-emerald-900">-</span></div>
-                        <div class="flex justify-between"><span class="text-slate-500">🐼 Giá vé:</span> <span id="feeDisplay" class="font-bold text-emerald-900">-</span></div>
-                        <div class="flex justify-between"><span class="text-slate-500">🐨 Tổng số buổi:</span> <span id="totalSessions" class="font-bold text-sky-600">0 buổi</span></div>
+                        <div class="flex justify-between"><span class="text-slate-500">Người dạy học:</span> <span id="teacherDisplay" class="font-bold text-emerald-900">-</span></div>
+                        <div class="flex justify-between"><span class="text-slate-500">Học phí/buổi:</span> <span id="feeDisplay" class="font-bold text-emerald-900">-</span></div>
+                        <div class="flex justify-between"><span class="text-slate-500">Tổng số buổi:</span> <span id="totalSessions" class="font-bold text-sky-600">0 buổi</span></div>
                     </div>
 
                     <div class="bg-sky-50 p-4 rounded-2xl border-2 border-sky-200 relative overflow-hidden">
@@ -89,12 +101,13 @@
                                 <input type="number" id="btvn" placeholder="100" min="0" max="100" class="w-full px-3.5 py-2.5 bg-emerald-50/50 border-2 border-emerald-200 rounded-xl focus:outline-none focus:border-sky-500 font-medium">
                             </div>
                             <div>
-                                <label class="block font-semibold text-slate-700 mb-1">🦊 Tinh thần học tập</label>
+                                <label class="block font-semibold text-slate-700 mb-1">Tinh thần học tập</label>
                                 <select id="thaiDo" class="w-full px-3.5 py-2.5 bg-emerald-50/50 border-2 border-emerald-200 rounded-xl focus:outline-none focus:border-sky-500 font-medium cursor-pointer">
-                                    <option value="Tốt">Siêu năng động 🐵</option>
-                                    <option value="Nói chuyện riêng">Bàn tán 🐒</option>
-                                    <option value="Lười học">Ngủ đông 🐨</option>
-                                    <option value="Mất tập trung">Bay nhảy 🦜</option>
+                                    <option value="Tốt">Tích cực, tập trung tốt</option>
+                                    <option value="Nói chuyện riêng">Tiếp thu ổn</option>
+                                    <option value="Lười học">Chưa thực sự tập trung</option>
+                                    <option value="Mất tập trung">Cần cố gắng nhiều hơn</option>
+                                    <option value="Custom"> Tự điền ...</option>
                                 </select>
                             </div>
                         </div>
@@ -107,7 +120,7 @@
                             <input type="file" id="testImage" accept="image/*" class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-sky-100 file:text-sky-800 hover:file:bg-sky-200 cursor-pointer">
                         </div>
                         <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white handwritten text-xl font-bold py-3 rounded-xl transition duration-200 shadow-md cursor-pointer tracking-wide border border-emerald-900">
-                            🦁 Lưu
+                            Lưu
                         </button>
                     </form>
                 </div>
@@ -117,7 +130,7 @@
                 
                 <div class="bg-white border-3 border-emerald-800 p-6 rounded-3xl shadow-sm overflow-hidden">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="handwritten text-2xl font-bold text-emerald-900">🐯 Lịch học</h3>
+                        <h3 class="handwritten text-2xl font-bold text-emerald-900">Lịch học</h3>
                         <span class="text-xs text-slate-400 font-medium bg-slate-100 px-2.5 py-1 rounded-lg">Storage Sync</span>
                     </div>
                     <div class="overflow-x-auto">
