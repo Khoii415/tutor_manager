@@ -130,7 +130,7 @@ function renderSessionTable() {
                 <td class="py-3 px-4"><span class="font-medium ${item.thaiDo && item.thaiDo.includes('Tốt') ? 'text-emerald-600' : 'text-amber-600'}">${item.thaiDo || '-'}</span></td>
                 <td class="py-3 px-4 text-xs text-slate-500">${item.nhanXet || 'Không có'}</td>
                 <td class="py-3 px-4 text-center flex items-center justify-center gap-3">
-                    ${item.image ? `<a href="${item.image}" target="_blank" class="text-sky-600 font-medium text-xs hover:underline">Xem ảnh</a>` : '<span class="text-xs text-slate-400">Không có</span>'}
+                    ${item.image ? `<button onclick="openImageModal('${item.image}')" class="text-sky-600 font-medium text-xs hover:underline cursor-pointer">Xem ảnh</button>` : '<span class="text-xs text-slate-400">Không có</span>'}
                     <button onclick="deleteSession(${originalIndex})" class="text-rose-500 hover:text-rose-700 text-xs font-bold cursor-pointer" title="Xóa buổi học này">🗑️ Xóa</button>
                 </td>
             </tr>
@@ -140,11 +140,14 @@ function renderSessionTable() {
         if(item.image) {
             hasImages = true;
             let imgCard = `
-                <div class="border border-emerald-200 rounded-2xl overflow-hidden group relative bg-emerald-50/50 shadow-xs">
-                    <a href="${item.image}" target="_blank" title="Bấm để xem ảnh gốc">
-                        <img src="${item.image}" alt="Bài test đã chấm" class="w-full h-32 object-cover group-hover:scale-105 transition duration-300 cursor-pointer">
-                    </a>
-                    <div class="p-2 text-xs font-medium text-slate-700 truncate bg-white border-t border-emerald-100">${displayBuoi}</div>
+                <div class="border border-emerald-200 rounded-xl overflow-hidden group relative bg-emerald-50/40 shadow-xs flex flex-col">
+                    <div onclick="openImageModal('${item.image}')" title="Bấm để phóng to ảnh" class="cursor-pointer overflow-hidden bg-slate-100 h-32 flex items-center justify-center">
+                        <img src="${item.image}" alt="Bài test" class="w-full h-32 object-cover group-hover:scale-105 transition duration-300">
+                    </div>
+                    <div class="p-2 text-xs font-medium text-slate-700 bg-white border-t border-emerald-100 flex justify-between items-center">
+                        <span class="truncate">${displayBuoi}</span>
+                        <button onclick="openImageModal('${item.image}')" class="text-sky-600 hover:underline text-[11px] shrink-0 ml-1 cursor-pointer">Phóng to</button>
+                    </div>
                 </div>
             `;
             testGallery.innerHTML += imgCard;
@@ -228,9 +231,30 @@ sessionForm.addEventListener('submit', function(e) {
     const imageFile = document.getElementById('testImage').files[0];
 
     if(imageFile) {
+        // Nén bớt kích thước ảnh để không bị nặng localStorage
         const reader = new FileReader();
         reader.onload = function(uploadEvent) {
-            saveNewSession(student, tenBuoi, ngayHoc, noiDung, btvn, thaiDo, nhanXet, uploadEvent.target.result);
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 800; // Giới hạn kích thước tối đa
+                if (width > height && width > maxDim) {
+                    height *= maxDim / width;
+                    width = maxDim;
+                } else if (height > maxDim) {
+                    width *= maxDim / height;
+                    height = maxDim;
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                saveNewSession(student, tenBuoi, ngayHoc, noiDung, btvn, thaiDo, nhanXet, compressedDataUrl);
+            };
+            img.src = uploadEvent.target.result;
         };
         reader.readAsDataURL(imageFile);
     } else {
@@ -252,7 +276,6 @@ function saveNewSession(student, tenBuoi, ngayHoc, noiDung, btvn, thaiDo, nhanXe
     });
     
     localStorage.setItem('tutor_app_students', JSON.stringify(studentsData));
-    
     sessionForm.reset();
     renderApp();
     alert('Đã lưu nhật ký thành công cho ' + student.name + '!');
@@ -339,69 +362,189 @@ function exportToPDF() {
             <meta charset="UTF-8">
             <title>Bao-Cao-${student.name}</title>
             <style>
-                body { font-family: 'Roboto', sans-serif; color: #1e293b; padding: 20px; margin: 0; }
+                @page {
+                    size: A4;
+                    margin: 15mm;
+                }
+                body { 
+                    font-family: 'Roboto', sans-serif; 
+                    color: #1e293b; 
+                    background: white;
+                    padding: 0; 
+                    margin: 0; 
+                }
+                .page-container {
+                    width: 100%;
+                    max-width: 210mm;
+                    margin: 0 auto;
+                }
                 h1 { color: #065f46; font-size: 20px; text-align: center; margin-bottom: 5px; }
                 .header-box { background: #f0fdf4; padding: 12px; border-radius: 8px; border: 1px solid #bbf7d0; margin-bottom: 20px; font-size: 13px; }
                 table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
                 th { background-color: #065f46; color: white; padding: 8px; text-align: left; }
                 td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
                 .footer { margin-top: 30px; text-align: right; font-size: 12px; color: #64748b; page-break-before: avoid; }
+                
+                /* Ẩn nút bấm khi in/lưu file */
+                @media print {
+                    .no-print { display: none !important; }
+                }
             </style>
         </head>
         <body>
-            <div style="text-align: center; border-bottom: 2px solid #065f46; padding-bottom: 10px; margin-bottom: 15px;">
-                <h1>BÁO CÁO HỌC TẬP ${titleTimeStr}</h1>
-                <p style="font-size: 13px; color: #475569; margin: 0;">Lớp: <strong>${student.name}</strong></p>
-            </div>
-            
-            <div class="header-box">
-                <p style="margin: 4px 0;"><strong> Người dạy học:</strong> ${student.teacher || 'Chưa có'}</p>
-                <p style="margin: 4px 0;"><strong> Học phí/buổi:</strong> ${(student.feePerSession || 0).toLocaleString('vi-VN')} đ</p>
-                <p style="margin: 4px 0;"><strong> Tổng số buổi:</strong> ${filteredSessions.length} buổi</p>
-                <p style="margin: 4px 0; font-size: 15px; color: #0369a1;"><strong> Tổng học phí:</strong> ${totalMoney.toLocaleString('vi-VN')} đ</p>
-            </div>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th>Buổi / Ngày</th>
-                        <th>Nội dung</th>
-                        <th style="text-align: center;">BTVN</th>
-                        <th>Tinh thần</th>
-                        <th>Nhận xét</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${sessionsHtml}
-                </tbody>
-            </table>
-
-            ${imagesHtmlForPDF ? `
-                <div style="margin-top: 35px; page-break-before: always;">
-                    <h2 style="font-size: 15px; color: #065f46; border-bottom: 1px solid #065f46; padding-bottom: 6px; margin-bottom: 20px;">PHỤ LỤC: HÌNH ẢNH BÀI TEST & BÀI TẬP</h2>
-                    ${imagesHtmlForPDF}
+            <div class="page-container">
+                <!-- Thanh công cụ nhỏ ở tab mới để người dùng bấm in thủ công nếu lỡ tắt bảng lệnh -->
+                <div class="no-print" style="background: #e2e8f0; padding: 10px; text-align: right; margin-bottom: 20px; border-radius: 6px;">
+                    <button onclick="window.print()" style="background: #065f46; color: white; border: none; padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer;">🖨️ In / Lưu PDF ngay</button>
                 </div>
-            ` : ''}
 
-            <div class="footer">
-                <p>Ngày xuất báo cáo: ${new Date().toLocaleDateString('vi-VN')}</p>
-                <p style="margin-top: 25px; font-weight: bold; color: #065f46;">(Ký và ghi rõ họ tên)</p>
+                <div style="text-align: center; border-bottom: 2px solid #065f46; padding-bottom: 10px; margin-bottom: 15px;">
+                    <h1>BÁO CÁO HỌC TẬP ${titleTimeStr}</h1>
+                    <p style="font-size: 13px; color: #475569; margin: 0;">Lớp: <strong>${student.name}</strong></p>
+                </div>
+                
+                <div class="header-box">
+                    <p style="margin: 4px 0;"><strong>Người dạy học:</strong> ${student.teacher || 'Chưa có'}</p>
+                    <p style="margin: 4px 0;"><strong>Học phí/buổi:</strong> ${(student.feePerSession || 0).toLocaleString('vi-VN')} đ</p>
+                    <p style="margin: 4px 0;"><strong>Tổng số buổi:</strong> ${filteredSessions.length} buổi</p>
+                    <p style="margin: 4px 0; font-size: 15px; color: #0369a1;"><strong>Tổng học phí:</strong> ${totalMoney.toLocaleString('vi-VN')} đ</p>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Buổi / Ngày</th>
+                            <th>Nội dung</th>
+                            <th style="text-align: center;">BTVN</th>
+                            <th>Tinh thần</th>
+                            <th>Nhận xét</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sessionsHtml}
+                    </tbody>
+                </table>
+
+                ${imagesHtmlForPDF ? `
+                    <div style="margin-top: 35px; page-break-before: always;">
+                        <h2 style="font-size: 15px; color: #065f46; border-bottom: 1px solid #065f46; padding-bottom: 6px; margin-bottom: 20px;">PHỤ LỤC: HÌNH ẢNH BÀI TEST & BÀI TẬP</h2>
+                        ${imagesHtmlForPDF}
+                    </div>
+                ` : ''}
+
+                <div class="footer">
+                    <p>Ngày xuất báo cáo: ${new Date().toLocaleDateString('vi-VN')}</p>
+                    <p style="margin-top: 25px; font-weight: bold; color: #065f46;">(Ký và ghi rõ họ tên)</p>
+                </div>
             </div>
+
+            <script>
+                // Tự động bật bảng in/lưu PDF chuẩn A4 ngay khi tab mở ra
+                window.onload = function() {
+                    setTimeout(() => {
+                        window.print();
+                    }, 500);
+                }
+            <\/script>
         </body>
         </html>
     `;
 
     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    
     const printWindow = window.open(url, '_blank');
-    if (printWindow) {
-        printWindow.onload = function() {
-            printWindow.print();
-        };
-    } else {
-        alert("Trình duyệt đang chặn cửa sổ bật lên (Pop-up blocker). Vui lòng cho phép popup cho trang web này!");
+    
+    if (!printWindow) {
+        alert("Trình duyệt đang chặn cửa sổ bật lên (Pop-up blocker). Vui lòng cho phép popup!");
     }
 }
 
+// --- HÀM XỬ LÝ MODAL PHÓNG TO ẢNH ---
+function openImageModal(imageSrc) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    if (modal && modalImg) {
+        modalImg.src = imageSrc;
+        modal.classList.remove('hidden');
+    }
+}
+
+function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+let currentScale = 1;
+let isDragging = false;
+let startX, startY;
+let translateX = 0;
+let translateY = 0;
+
+// Lắng nghe sự kiện lăn chuột để Zoom trong modal ảnh
+const modalImg = document.getElementById('modalImage');
+if (modalImg) {
+    // Zoom bằng cuộn chuột
+    modalImg.parentElement.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        const zoomIntensity = 0.1;
+        if (e.deltaY < 0) {
+            currentScale += zoomIntensity; // Cuộn lên -> Phóng to
+        } else {
+            currentScale -= zoomIntensity; // Cuộn xuống -> Thu nhỏ
+        }
+        
+        // Giới hạn mức zoom từ 0.5x đến 5x
+        currentScale = Math.max(0.5, Math.min(currentScale, 5));
+        updateImageTransform();
+    });
+
+    // Kéo thả ảnh khi đã phóng to
+    modalImg.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX - translateX;
+        startY = e.clientY - translateY;
+        modalImg.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        translateX = e.clientX - startX;
+        translateY = e.clientY - startY;
+        updateImageTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+        isDragging = false;
+        if(modalImg) modalImg.style.cursor = 'grab';
+    });
+}
+
+function updateImageTransform() {
+    if (modalImg) {
+        modalImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentScale})`;
+    }
+}
+
+// Reset lại trạng thái zoom và vị trí mỗi khi mở hoặc đóng ảnh
+const originalOpenImageModal = window.openImageModal || function(src) {
+    const modal = document.getElementById('imageModal');
+    const img = document.getElementById('modalImage');
+    if (modal && img) {
+        img.src = src;
+        modal.classList.remove('hidden');
+        // Reset zoom & pan
+        currentScale = 1;
+        translateX = 0;
+        translateY = 0;
+        updateImageTransform();
+    }
+};
+
+function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
 renderApp();
