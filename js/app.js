@@ -141,7 +141,9 @@ function renderSessionTable() {
             hasImages = true;
             let imgCard = `
                 <div class="border border-emerald-200 rounded-2xl overflow-hidden group relative bg-emerald-50/50 shadow-xs">
-                    <img src="${item.image}" alt="Bài test đã chấm" class="w-full h-32 object-cover group-hover:scale-105 transition duration-300">
+                    <a href="${item.image}" target="_blank" title="Bấm để xem ảnh gốc">
+                        <img src="${item.image}" alt="Bài test đã chấm" class="w-full h-32 object-cover group-hover:scale-105 transition duration-300 cursor-pointer">
+                    </a>
                     <div class="p-2 text-xs font-medium text-slate-700 truncate bg-white border-t border-emerald-100">${displayBuoi}</div>
                 </div>
             `;
@@ -282,6 +284,8 @@ function exportToPDF() {
     });
 
     let sessionsHtml = '';
+    let imagesHtmlForPDF = '';
+
     if (filteredSessions.length > 0) {
         filteredSessions.forEach((item) => {
             let displayBuoi = '';
@@ -301,6 +305,15 @@ function exportToPDF() {
                     <td style="font-size: 12px; color: #475569;">${item.nhanXet || 'Không có'}</td>
                 </tr>
             `;
+
+            if (item.image) {
+                imagesHtmlForPDF += `
+                    <div style="margin-bottom: 25px; page-break-inside: avoid; text-align: center;">
+                        <p style="font-size: 13px; font-weight: bold; color: #065f46; margin-bottom: 8px;">${displayBuoi} - Bài test / Bài tập</p>
+                        <img src="${item.image}" style="max-width: 100%; max-height: 450px; border-radius: 6px; border: 1px solid #cbd5e1;" />
+                    </div>
+                `;
+            }
         });
     } else {
         sessionsHtml = `<tr><td colspan="5" style="text-align: center; padding: 15px; color: #94a3b8;">Không có nhật ký buổi học trong khoảng thời gian này.</td></tr>`;
@@ -332,7 +345,7 @@ function exportToPDF() {
                 table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
                 th { background-color: #065f46; color: white; padding: 8px; text-align: left; }
                 td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
-                .footer { margin-top: 30px; text-align: right; font-size: 12px; color: #64748b; }
+                .footer { margin-top: 30px; text-align: right; font-size: 12px; color: #64748b; page-break-before: avoid; }
             </style>
         </head>
         <body>
@@ -363,6 +376,13 @@ function exportToPDF() {
                 </tbody>
             </table>
 
+            ${imagesHtmlForPDF ? `
+                <div style="margin-top: 35px; page-break-before: always;">
+                    <h2 style="font-size: 15px; color: #065f46; border-bottom: 1px solid #065f46; padding-bottom: 6px; margin-bottom: 20px;">PHỤ LỤC: HÌNH ẢNH BÀI TEST & BÀI TẬP</h2>
+                    ${imagesHtmlForPDF}
+                </div>
+            ` : ''}
+
             <div class="footer">
                 <p>Ngày xuất báo cáo: ${new Date().toLocaleDateString('vi-VN')}</p>
                 <p style="margin-top: 25px; font-weight: bold; color: #065f46;">(Ký và ghi rõ họ tên)</p>
@@ -371,7 +391,6 @@ function exportToPDF() {
         </html>
     `;
 
-    // Sử dụng Blob URL giúp trình duyệt xử lý trang in như một tệp độc lập hoàn toàn, không gây nghẽn luồng chính
     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     
@@ -384,6 +403,5 @@ function exportToPDF() {
         alert("Trình duyệt đang chặn cửa sổ bật lên (Pop-up blocker). Vui lòng cho phép popup cho trang web này!");
     }
 }
-
 
 renderApp();
