@@ -36,6 +36,50 @@ function initStudentSelector() {
     });
 }
 
+function openEditClassModal() {
+    const classSelector = document.getElementById('studentSelector');
+    const classId = classSelector ? classSelector.value : null;
+
+    if (!classId) {
+        alert("Vui lòng chọn hoặc tạo một lớp học trước!");
+        return;
+    }
+
+    const classData = studentsData.find(c => c.id === classId);
+    if (!classData) return;
+
+    // Đổ dữ liệu cũ vào các ô input
+    document.getElementById('editClassId').value = classData.id;
+    document.getElementById('editClassName').value = classData.name || '';
+    document.getElementById('editTeacherName').value = classData.teacher || '';
+    document.getElementById('editFeePerSession').value = classData.feePerSession || 0;
+
+    // Hiện modal
+    document.getElementById('editClassModal').classList.remove('hidden');
+}
+
+function closeEditClassModal() {
+    document.getElementById('editClassModal').classList.add('hidden');
+}
+
+function saveEditClass() {
+    const classId = document.getElementById('editClassId').value;
+    const newName = document.getElementById('editClassName').value;
+    const newTeacher = document.getElementById('editTeacherName').value;
+    const newFee = parseInt(document.getElementById('editFeePerSession').value) || 0;
+
+    const classData = studentsData.find(c => c.id === classId);
+    if (classData) {
+        classData.name = newName;
+        classData.teacher = newTeacher;
+        classData.feePerSession = newFee;
+
+        localStorage.setItem('tutor_app_students', JSON.stringify(studentsData));
+        renderApp();
+        closeEditClassModal();
+        alert("Đã cập nhật thông tin lớp học thành công!");
+    }
+}
 function getCurrentStudent() {
     return studentsData.find(s => s.id === currentStudentId);
 }
