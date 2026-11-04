@@ -123,7 +123,6 @@ function renderApp() {
 // Hàm chuẩn hóa chuỗi ngày sang định dạng dd/mm/yyyy
 function formatToDDMMYYYY(dateStr) {
     if (!dateStr) return '';
-    // Nếu lưu dạng yyyy-mm-dd
     if (dateStr.includes('-')) {
         let parts = dateStr.split('-');
         if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
@@ -191,7 +190,6 @@ function renderSessionTable() {
         }
         
         let formattedDate = formatToDDMMYYYY(item.buoi);
-        let displayBuoi = `${item.tenBuoi || 'Buổi'} (${formattedDate})`;
 
         let sessionImages = [];
         if (item.images && Array.isArray(item.images)) {
@@ -203,8 +201,10 @@ function renderSessionTable() {
         let imageHtmlContent = '<span class="text-xs text-slate-400">Không có</span>';
         if (sessionImages.length > 0) {
             hasImages = true;
-            imageHtmlContent = `<button onclick="openImageModal('${sessionImages[0]}')" class="text-sky-600 font-medium text-xs hover:underline cursor-pointer">Xem ảnh (${sessionImages.length})</button>`;
+            // Thay đổi thành dạng nút bấm gọn gàng xếp dọc
+            imageHtmlContent = `<button onclick="openImageModal('${sessionImages[0]}')" class="text-xs bg-sky-50 text-sky-600 px-2.5 py-1 rounded hover:bg-sky-100 font-medium cursor-pointer">Xem ảnh (${sessionImages.length})</button>`;
             
+            let displayBuoiForGallery = `${item.tenBuoi || 'Buổi'} (${formattedDate})`;
             sessionImages.forEach(imgSrc => {
                 let imgCard = `
                     <div class="border border-emerald-200 rounded-xl overflow-hidden group relative bg-emerald-50/40 shadow-xs flex flex-col">
@@ -212,7 +212,7 @@ function renderSessionTable() {
                             <img src="${imgSrc}" alt="Bài test" class="w-full h-32 object-cover group-hover:scale-105 transition duration-300">
                         </div>
                         <div class="p-2 text-xs font-medium text-slate-700 bg-white border-t border-emerald-100 flex justify-between items-center">
-                            <span class="truncate">${displayBuoi}</span>
+                            <span class="truncate">${displayBuoiForGallery}</span>
                             <button onclick="openImageModal('${imgSrc}')" class="text-sky-600 hover:underline text-[11px] shrink-0 ml-1 cursor-pointer">Phóng to</button>
                         </div>
                     </div>
@@ -221,16 +221,22 @@ function renderSessionTable() {
             });
         }
 
+        // Đã canh chỉnh lại align-top và chia thành các thẻ div riêng biệt để tên buổi và ngày tự xuống dòng
         let row = `
             <tr class="hover:bg-slate-50/50">
-                <td class="py-3 px-4 font-medium text-slate-900">${displayBuoi}</td>
-                <td class="py-3 px-4 text-slate-600">${item.noiDung}</td>
-                <td class="py-3 px-4">${item.btvn !== '' ? btvnBadge : '-'}</td>
-                <td class="py-3 px-4"><span class="font-medium ${item.thaiDo && item.thaiDo.includes('Tốt') ? 'text-emerald-600' : 'text-amber-600'}">${item.thaiDo || '-'}</span></td>
-                <td class="py-3 px-4 text-xs text-slate-500">${item.nhanXet || 'Không có'}</td>
-                <td class="py-3 px-4 text-center flex items-center justify-center gap-3">
-                    ${imageHtmlContent}
-                    <button onclick="deleteSession(${originalIndex})" class="text-rose-500 hover:text-rose-700 text-xs font-bold cursor-pointer" title="Xóa buổi học này">🗑️ Xóa</button>
+                <td class="py-3 px-3 align-top font-medium text-slate-900 break-words">
+                    <div>${item.tenBuoi || 'Buổi'}</div>
+                    <div class="text-xs text-slate-500 mt-0.5">(${formattedDate})</div>
+                </td>
+                <td class="py-3 px-3 align-top text-slate-600 whitespace-pre-line break-words">${item.noiDung}</td>
+                <td class="py-3 px-2 align-top text-center">${item.btvn !== '' ? btvnBadge : '-'}</td>
+                <td class="py-3 px-2 align-top text-center"><span class="font-medium ${item.thaiDo && item.thaiDo.includes('Tốt') ? 'text-emerald-600' : 'text-amber-600'}">${item.thaiDo || '-'}</span></td>
+                <td class="py-3 px-3 align-top text-xs text-slate-500 whitespace-pre-line break-words">${item.nhanXet || 'Không có'}</td>
+                <td class="py-3 px-2 align-top text-center">
+                    <div class="flex flex-col items-center gap-1.5">
+                        ${imageHtmlContent}
+                        <button onclick="deleteSession(${originalIndex})" class="text-xs bg-rose-50 text-rose-600 px-2.5 py-1 rounded hover:bg-rose-100 font-medium cursor-pointer" title="Xóa buổi học này">🗑️ Xóa</button>
+                    </div>
                 </td>
             </tr>
         `;
