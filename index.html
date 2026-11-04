@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- html2pdf library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- Flatpickr CSS (Bắt buộc để hiển thị chuẩn dd/mm/yyyy) -->
+    <!-- Flatpickr CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -71,7 +71,6 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1">Ngày học (dd/mm/yyyy)</label>
-                        <!-- Ô nhập ngày ép định dạng dd/mm/yyyy -->
                         <input type="text" id="ngayHoc" required placeholder="dd/mm/yyyy" class="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white cursor-pointer">
                     </div>
                     <div>
@@ -151,19 +150,22 @@
                     <h3 class="font-bold text-slate-800 text-sm">Danh Sách Nhật Ký Buổi Học</h3>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-sm">
+                    <table class="w-full text-left border-collapse text-sm table-fixed">
                         <thead>
                             <tr class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
-                                <th class="py-3 px-4">Buổi / Ngày</th>
-                                <th class="py-3 px-4">Nội Dung</th>
-                                <th class="py-3 px-4">BTVN</th>
-                                <th class="py-3 px-4">Thái Độ</th>
-                                <th class="py-3 px-4">Nhận Xét</th>
-                                <th class="py-3 px-4 text-center">Hành Động</th>
+                                <th class="py-3 px-3 w-3/12">Buổi / Ngày</th>
+                                <th class="py-3 px-3 w-3/12">Nội Dung</th>
+                                <th class="py-3 px-2 w-1/12 text-center">BTVN</th>
+                                <th class="py-3 px-2 w-2/12 text-center">Thái Độ</th>
+                                <th class="py-3 px-3 w-2/12">Nhận Xét</th>
+                                <th class="py-3 px-2 w-1/12 text-center">Thao tác</th>
                             </tr>
                         </thead>
-                        <tbody id="sessionTableBody" class="divide-y divide-slate-100">
-                            <!-- Dynamic rows -->
+                        <tbody id="sessionTableBody" class="divide-y divide-slate-100 align-top">
+                            <!-- Lưu ý trong file js/app.js khi render <tr> và <td>:
+                                 Hãy chắc chắn các thẻ <td> kế thừa style này hoặc không đặt width cứng trong JS. 
+                                 VD một dòng mẫu render:
+                            -->
                         </tbody>
                     </table>
                 </div>
@@ -217,7 +219,7 @@
         </div>
     </div>
 
-    <!-- Flatpickr JS CDN (Khởi tạo lịch tiếng Việt định dạng dd/mm/yyyy) -->
+    <!-- Flatpickr JS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/vn.js"></script>
     <!-- Main JavaScript File -->
