@@ -515,6 +515,11 @@ function exportToPDF() {
                     font-size: 11.5px;
                     margin-top: 6px;
                 }
+                col.c1 { width: 14%; }
+                col.c2 { width: 20%; }
+                col.c3 { width: 7%; }
+                col.c4 { width: 9%; }
+                col.c5 { width: 50%; }
                 thead {
                     display: table-header-group;
                 }
@@ -541,11 +546,11 @@ function exportToPDF() {
                 tbody tr:nth-child(even) {
                     background-color: #f8fafc;
                 }
-                .col-buoi { width: 15%; }
+                .col-buoi { width: 14%; }
                 .col-noidung { width: 20%; }
                 .col-btvn { width: 7%; }
                 .col-tinhthan { width: 9%; }
-                .col-nhanxet { width: 49%; }
+                .col-nhanxet { width: 50%; }
                 .session-title {
                     font-weight: 600;
                     color: #0f172a;
@@ -598,6 +603,13 @@ function exportToPDF() {
                 </div>
 
                 <table>
+                    <colgroup>
+                        <col class="c1">
+                        <col class="c2">
+                        <col class="c3">
+                        <col class="c4">
+                        <col class="c5">
+                    </colgroup>
                     <thead>
                         <tr>
                             <th class="col-buoi">Buổi / Ngày</th>
