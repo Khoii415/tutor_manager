@@ -518,10 +518,10 @@ function exportToPDF() {
                     background-color: #ffffff;
                 }
                 col.c1 { width: 14%; }
-                col.c2 { width: 30%; }
+                col.c2 { width: 20%; }
                 col.c3 { width: 7%; }
                 col.c4 { width: 9%; }
-                col.c5 { width: 40%; }
+                col.c5 { width: 50%; }
                 thead {
                     display: table-header-group;
                 }
@@ -552,10 +552,10 @@ function exportToPDF() {
                     background-color: #f8fafc;
                 }
                 .col-buoi { width: 14%; }
-                .col-noidung { width: 20%; }
+                .col-noidung { width: 30%; }
                 .col-btvn { width: 7%; }
                 .col-tinhthan { width: 9%; }
-                .col-nhanxet { width: 50%; }
+                .col-nhanxet { width: 40%; }
                 .session-title {
                     font-weight: 600;
                     color: #0f172a;
