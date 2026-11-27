@@ -362,6 +362,15 @@ function saveNewSessionWithImages(student, tenBuoi, ngayHoc, noiDung, btvn, thai
     alert('Đã lưu nhật ký thành công cho ' + student.name + '!');
 }
 
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
 function exportToPDF() {
     const student = getCurrentStudent();
     if (!student) {
@@ -400,15 +409,27 @@ function exportToPDF() {
     if (filteredSessions.length > 0) {
         filteredSessions.forEach((item) => {
             let formattedDate = formatToDDMMYYYY(item.buoi);
-            let displayBuoi = `${item.tenBuoi || 'Buổi'} (${formattedDate})`;
+            let tenBuoiSafe = escapeHtml(item.tenBuoi || 'Buổi');
+            let formattedDateSafe = escapeHtml(formattedDate);
+            let displayBuoi = `${tenBuoiSafe} (${formattedDateSafe})`;
+
+            let btvnText = (item.btvn !== '' && item.btvn !== undefined && item.btvn !== null)
+                ? `${escapeHtml(item.btvn)}%`
+                : '-';
+
+            let isGoodAttitude = item.thaiDo && item.thaiDo.includes('Tốt');
+            let attitudeColor = isGoodAttitude ? '#059669' : '#d97706';
 
             sessionsHtml += `
                 <tr>
-                    <td style="font-weight: 500;">${displayBuoi}</td>
-                    <td>${item.noiDung}</td>
-                    <td style="text-align: center;">${item.btvn !== '' ? item.btvn + '%' : '-'}</td>
-                    <td>${item.thaiDo || '-'}</td>
-                    <td style="font-size: 12px; color: #475569;">${item.nhanXet || 'Không có'}</td>
+                    <td class="col-buoi">
+                        <div class="session-title">${tenBuoiSafe}</div>
+                        <div class="session-date">(${formattedDateSafe})</div>
+                    </td>
+                    <td class="col-noidung text-wrap">${escapeHtml(item.noiDung || '-')}</td>
+                    <td class="col-btvn text-center">${btvnText}</td>
+                    <td class="col-tinhthan text-center" style="color: ${attitudeColor}; font-weight: 600;">${escapeHtml(item.thaiDo || '-')}</td>
+                    <td class="col-nhanxet text-wrap">${escapeHtml(item.nhanXet || 'Không có')}</td>
                 </tr>
             `;
 
@@ -421,15 +442,15 @@ function exportToPDF() {
 
             sessionImages.forEach(imgSrc => {
                 imagesHtmlForPDF += `
-                    <div style="margin-bottom: 25px; page-break-inside: avoid; text-align: center;">
+                    <div style="margin-bottom: 24px; page-break-inside: avoid; text-align: center;">
                         <p style="font-size: 13px; font-weight: bold; color: #065f46; margin-bottom: 8px;">${displayBuoi} - Bài test / Bài tập</p>
-                        <img src="${imgSrc}" style="max-width: 100%; max-height: 450px; border-radius: 6px; border: 1px solid #cbd5e1;" />
+                        <img src="${imgSrc}" style="max-width: 100%; max-height: 460px; border-radius: 6px; border: 1px solid #cbd5e1;" />
                     </div>
                 `;
             });
         });
     } else {
-        sessionsHtml = `<tr><td colspan="5" style="text-align: center; padding: 15px; color: #94a3b8;">Không có nhật ký buổi học trong khoảng thời gian này.</td></tr>`;
+        sessionsHtml = `<tr><td colspan="5" style="text-align: center; padding: 18px; color: #94a3b8;">Không có nhật ký buổi học trong khoảng thời gian này.</td></tr>`;
     }
 
     const totalMoney = filteredSessions.length * (student.feePerSession || 0);
@@ -456,61 +477,161 @@ function exportToPDF() {
         <html>
         <head>
             <meta charset="UTF-8">
-            <title>Bao-Cao-${student.name}</title>
+            <title>Bao-Cao-${escapeHtml(student.name)}</title>
             <style>
-                @page { size: A4; margin: 15mm; }
-                body { font-family: 'Roboto', sans-serif; color: #1e293b; background: white; padding: 0; margin: 0; }
-                .page-container { width: 100%; max-width: 210mm; margin: 0 auto; }
-                h1 { color: #065f46; font-size: 20px; text-align: center; margin-bottom: 5px; }
-                .header-box { background: #f0fdf4; padding: 12px; border-radius: 8px; border: 1px solid #bbf7d0; margin-bottom: 20px; font-size: 13px; }
-                table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-                th { background-color: #065f46; color: white; padding: 8px; text-align: left; }
-                td { padding: 8px; border-bottom: 1px solid #e2e8f0; }
-                .footer { margin-top: 30px; text-align: right; font-size: 12px; color: #64748b; page-break-before: avoid; }
-                @media print { .no-print { display: none !important; } }
+                @page { size: A4 portrait; margin: 12mm 12mm; }
+                * { box-sizing: border-box; }
+                body {
+                    font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+                    color: #1e293b;
+                    background: white;
+                    padding: 0;
+                    margin: 0;
+                    line-height: 1.45;
+                }
+                .page-container {
+                    width: 100%;
+                    max-width: 100%;
+                    margin: 0 auto;
+                }
+                h1 {
+                    color: #065f46;
+                    font-size: 19px;
+                    text-align: center;
+                    margin: 0 0 4px 0;
+                }
+                .header-box {
+                    background: #f0fdf4;
+                    padding: 10px 14px;
+                    border-radius: 8px;
+                    border: 1px solid #bbf7d0;
+                    margin-bottom: 14px;
+                    font-size: 12.5px;
+                }
+                table {
+                    width: 100%;
+                    table-layout: fixed;
+                    border-collapse: collapse;
+                    font-size: 11.5px;
+                    margin-top: 6px;
+                }
+                col.c1 { width: 14%; }
+                col.c2 { width: 20%; }
+                col.c3 { width: 7%; }
+                col.c4 { width: 9%; }
+                col.c5 { width: 50%; }
+                thead {
+                    display: table-header-group;
+                }
+                tr {
+                    page-break-inside: avoid;
+                    break-inside: avoid;
+                }
+                th {
+                    background-color: #065f46;
+                    color: white;
+                    padding: 7px 6px;
+                    text-align: left;
+                    font-weight: 600;
+                    word-wrap: break-word;
+                    overflow-wrap: anywhere;
+                }
+                td {
+                    padding: 7px 6px;
+                    border-bottom: 1px solid #e2e8f0;
+                    vertical-align: top;
+                    word-wrap: break-word;
+                    overflow-wrap: anywhere;
+                }
+                tbody tr:nth-child(even) {
+                    background-color: #f8fafc;
+                }
+                .col-buoi { width: 14%; }
+                .col-noidung { width: 20%; }
+                .col-btvn { width: 7%; }
+                .col-tinhthan { width: 9%; }
+                .col-nhanxet { width: 50%; }
+                .session-title {
+                    font-weight: 600;
+                    color: #0f172a;
+                    word-wrap: break-word;
+                    overflow-wrap: anywhere;
+                }
+                .session-date {
+                    font-size: 10.5px;
+                    color: #64748b;
+                    margin-top: 2px;
+                }
+                .text-wrap {
+                    white-space: pre-line;
+                    word-wrap: break-word;
+                    overflow-wrap: anywhere;
+                }
+                .text-center {
+                    text-align: center;
+                }
+                .footer {
+                    margin-top: 24px;
+                    text-align: right;
+                    font-size: 12px;
+                    color: #64748b;
+                    page-break-inside: avoid;
+                    break-inside: avoid;
+                }
+                @media print {
+                    .no-print { display: none !important; }
+                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                }
             </style>
         </head>
         <body>
             <div class="page-container">
-                <div class="no-print" style="background: #e2e8f0; padding: 10px; text-align: right; margin-bottom: 20px; border-radius: 6px;">
+                <div class="no-print" style="background: #e2e8f0; padding: 10px; text-align: right; margin-bottom: 16px; border-radius: 6px;">
                     <button onclick="window.print()" style="background: #065f46; color: white; border: none; padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer;">🖨️ In / Lưu PDF ngay</button>
                 </div>
 
-                <div style="text-align: center; border-bottom: 2px solid #065f46; padding-bottom: 10px; margin-bottom: 15px;">
-                    <h1>BÁO CÁO HỌC TẬP ${titleTimeStr}</h1>
-                    <p style="font-size: 13px; color: #475569; margin: 0;">Lớp: <strong>${student.name}</strong></p>
+                <div style="text-align: center; border-bottom: 2px solid #065f46; padding-bottom: 8px; margin-bottom: 12px;">
+                    <h1>BÁO CÁO HỌC TẬP ${escapeHtml(titleTimeStr)}</h1>
+                    <p style="font-size: 13px; color: #475569; margin: 0;">Lớp: <strong>${escapeHtml(student.name)}</strong></p>
                 </div>
                 
                 <div class="header-box">
-                    <p style="margin: 4px 0;"><strong>Người dạy học:</strong> ${student.teacher || 'Chưa có'}</p>
-                    <p style="margin: 4px 0;"><strong>Học phí/buổi:</strong> ${(student.feePerSession || 0).toLocaleString('vi-VN')} đ</p>
-                    <p style="margin: 4px 0;"><strong>Tổng số buổi:</strong> ${filteredSessions.length} buổi</p>
-                    <p style="margin: 4px 0; font-size: 15px; color: #0369a1;"><strong>Tổng học phí:</strong> ${totalMoney.toLocaleString('vi-VN')} đ</p>
+                    <p style="margin: 3px 0;"><strong>Người dạy học:</strong> ${escapeHtml(student.teacher || 'Chưa có')}</p>
+                    <p style="margin: 3px 0;"><strong>Học phí/buổi:</strong> ${(student.feePerSession || 0).toLocaleString('vi-VN')} đ</p>
+                    <p style="margin: 3px 0;"><strong>Tổng số buổi:</strong> ${filteredSessions.length} buổi</p>
+                    <p style="margin: 4px 0 2px 0; font-size: 14.5px; color: #0369a1;"><strong>Tổng học phí:</strong> ${totalMoney.toLocaleString('vi-VN')} đ</p>
                 </div>
 
                 <table>
+                    <colgroup>
+                        <col class="c1">
+                        <col class="c2">
+                        <col class="c3">
+                        <col class="c4">
+                        <col class="c5">
+                    </colgroup>
                     <thead>
                         <tr>
-                            <th>Buổi / Ngày</th>
-                            <th>Nội dung</th>
-                            <th style="text-align: center;">BTVN</th>
-                            <th>Tinh thần</th>
-                            <th>Nhận xét</th>
+                            <th class="col-buoi">Buổi / Ngày</th>
+                            <th class="col-noidung">Nội dung</th>
+                            <th class="col-btvn text-center">BTVN</th>
+                            <th class="col-tinhthan text-center">Tinh thần</th>
+                            <th class="col-nhanxet">Nhận xét</th>
                         </tr>
                     </thead>
                     <tbody>${sessionsHtml}</tbody>
                 </table>
 
                 ${imagesHtmlForPDF ? `
-                    <div style="margin-top: 35px; page-break-before: always;">
-                        <h2 style="font-size: 15px; color: #065f46; border-bottom: 1px solid #065f46; padding-bottom: 6px; margin-bottom: 20px;">PHỤ LỤC: HÌNH ẢNH BÀI TEST & BÀI TẬP</h2>
+                    <div style="margin-top: 30px; page-break-before: always;">
+                        <h2 style="font-size: 15px; color: #065f46; border-bottom: 1px solid #065f46; padding-bottom: 6px; margin-bottom: 18px;">PHỤ LỤC: HÌNH ẢNH BÀI TEST & BÀI TẬP</h2>
                         ${imagesHtmlForPDF}
                     </div>
                 ` : ''}
 
                 <div class="footer">
                     <p>Ngày xuất báo cáo: ${exportDateFormatted}</p>
-                    <p style="margin-top: 25px; font-weight: bold; color: #065f46;">(Ký và ghi rõ họ tên)</p>
+                    <p style="margin-top: 22px; font-weight: bold; color: #065f46;">(Ký và ghi rõ họ tên)</p>
                 </div>
             </div>
 
