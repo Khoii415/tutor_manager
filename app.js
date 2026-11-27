@@ -539,11 +539,11 @@ function exportToPDF() {
                 tbody tr:nth-child(even) {
                     background-color: #f8fafc;
                 }
-                .col-buoi { width: 18%; }
-                .col-noidung { width: 25%; }
-                .col-btvn { width: 8%; }
-                .col-tinhthan { width: 10%; }
-                .col-nhanxet { width: 41%; }
+                .col-buoi { width: 15%; }
+                .col-noidung { width: 20%; }
+                .col-btvn { width: 7%; }
+                .col-tinhthan { width: 9%; }
+                .col-nhanxet { width: 49%; }
                 .session-title {
                     font-weight: 600;
                     color: #0f172a;
