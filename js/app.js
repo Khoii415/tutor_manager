@@ -481,10 +481,10 @@ function exportToPDF() {
             <style>
                 @page { margin: 12mm 12mm; }
                 * { box-sizing: border-box; }
-                body {
+                html, body {
                     font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
                     color: #1e293b;
-                    background: white;
+                    background-color: #ffffff;
                     padding: 0;
                     margin: 0;
                     line-height: 1.45;
@@ -493,6 +493,7 @@ function exportToPDF() {
                     width: 100%;
                     max-width: 100%;
                     margin: 0 auto;
+                    background-color: #ffffff;
                 }
                 h1 {
                     color: #065f46;
@@ -514,6 +515,7 @@ function exportToPDF() {
                     border-collapse: collapse;
                     font-size: 11.5px;
                     margin-top: 6px;
+                    background-color: #ffffff;
                 }
                 col.c1 { width: 14%; }
                 col.c2 { width: 20%; }
@@ -529,7 +531,7 @@ function exportToPDF() {
                 }
                 th {
                     background-color: #065f46;
-                    color: white;
+                    color: #ffffff;
                     padding: 7px 6px;
                     text-align: left;
                     font-weight: 600;
@@ -542,6 +544,9 @@ function exportToPDF() {
                     vertical-align: top;
                     word-wrap: break-word;
                     overflow-wrap: anywhere;
+                }
+                tbody tr:nth-child(odd) {
+                    background-color: #ffffff;
                 }
                 tbody tr:nth-child(even) {
                     background-color: #f8fafc;
@@ -580,14 +585,20 @@ function exportToPDF() {
                 }
                 @media print {
                     .no-print { display: none !important; }
-                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    html, body, .page-container, table, tr, td, th, .header-box {
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                    html, body, .page-container, tbody tr:nth-child(odd) {
+                        background-color: #ffffff;
+                    }
                 }
             </style>
         </head>
         <body>
             <div class="page-container">
                 <div class="no-print" style="background: #e2e8f0; padding: 10px; text-align: right; margin-bottom: 16px; border-radius: 6px;">
-                    <button onclick="window.print()" style="background: #065f46; color: white; border: none; padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer;">🖨️ In / Lưu PDF ngay</button>
+                    <button onclick="window.print()" style="background: #065f46; color: #ffffff; border: none; padding: 8px 16px; font-weight: bold; border-radius: 4px; cursor: pointer;">🖨️ In / Lưu PDF ngay</button>
                 </div>
 
                 <div style="text-align: center; border-bottom: 2px solid #065f46; padding-bottom: 8px; margin-bottom: 12px;">
