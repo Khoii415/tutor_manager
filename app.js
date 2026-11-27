@@ -535,6 +535,8 @@ function exportToPDF() {
                     padding: 7px 6px;
                     border-bottom: 1px solid #e2e8f0;
                     vertical-align: top;
+                    word-wrap: break-word;
+                    overflow-wrap: anywhere;
                 }
                 tbody tr:nth-child(even) {
                     background-color: #f8fafc;
