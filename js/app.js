@@ -518,10 +518,10 @@ function exportToPDF() {
                     background-color: #ffffff;
                 }
                 col.c1 { width: 14%; }
-                col.c2 { width: 20%; }
+                col.c2 { width: 30%; }
                 col.c3 { width: 7%; }
                 col.c4 { width: 9%; }
-                col.c5 { width: 50%; }
+                col.c5 { width: 40%; }
                 thead {
                     display: table-header-group;
                 }
