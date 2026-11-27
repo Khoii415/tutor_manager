@@ -479,7 +479,7 @@ function exportToPDF() {
             <meta charset="UTF-8">
             <title>Bao-Cao-${escapeHtml(student.name)}</title>
             <style>
-                @page { size: A4 portrait; margin: 12mm 12mm; }
+                @page { margin: 12mm 12mm; }
                 * { box-sizing: border-box; }
                 body {
                     font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
